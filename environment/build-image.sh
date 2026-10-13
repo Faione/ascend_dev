@@ -18,6 +18,7 @@ HELP
 }
 fail() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+# 参数可由命令行提供；默认值只用于通用版本和镜像站。
 toolkit=""; ops=""; soc=""; torch_wheel=""; torch_npu_wheel=""
 base_image="${BASE_IMAGE:-ubuntu:22.04}"
 mirror_domain="${MIRROR_DOMAIN:-http://mirrors.tools.huawei.com}"
@@ -44,6 +45,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 [[ -s "$toolkit" && -s "$ops" && -n "$soc" ]] || fail 'Specify existing --toolkit-run and --ops-run files plus --soc.'
+# 从官方文件名提取 CANN 版本及设备型号，防止 Toolkit/ops 混搭。
 toolkit_name="$(basename -- "$toolkit")"
 ops_name="$(basename -- "$ops")"
 [[ "$toolkit_name" =~ ^Ascend-cann-toolkit_([^_]+)_linux-x86_64\.run$ ]] || fail 'Expected an x86_64 Toolkit .run filename.'
@@ -58,6 +60,7 @@ ops_soc_normalized="$(printf '%s' "$ops_soc" | tr '[:upper:]' '[:lower:]')"
 [[ "$torch_npu_version" =~ ^[0-9]+(\.[0-9]+){1,2}(\.post[0-9]+)?$ ]] || fail 'TorchNPU version must look like 2.10.0.post4.'
 [[ "$torch_npu_version" == "$torch_version" || "$torch_npu_version" == "$torch_version".post* ]] || fail 'TorchNPU package version must match torch version.'
 [[ -n "$torch_wheel" && -n "$torch_npu_wheel" ]] || fail 'Specify both --torch-wheel and --torch-npu-wheel.'
+# 当前环境固定 Python 3.10 / x86_64，wheel 文件名必须与版本参数一致。
 torch_wheel_name=""
 [[ -s "$torch_wheel" ]] || fail "Torch wheel $torch_wheel does not exist or is empty."
 torch_wheel_name="$(basename -- "$torch_wheel")"
@@ -74,6 +77,8 @@ base_arch="$(docker image inspect --format '{{.Architecture}}' "$base_image")"
 [[ "$base_arch" == amd64 ]] || fail "Base image $base_image is $base_arch; an amd64 image is required."
 [[ "$mirror_domain" =~ ^https?://[A-Za-z0-9.-]+(:[0-9]+)?/?$ ]] || fail 'Mirror domain must be an http(s) origin without a path.'
 context_dir="$(mktemp -d)"
+# 临时上下文将任意宿主机路径的安装包统一命名为 toolkit.run/ops.run。
+# trap 保证成功或失败后都清理宿主机的临时副本。
 trap 'rm -rf "$context_dir"' EXIT
 mkdir -p "$context_dir/packages"
 cp "$script_dir/Dockerfile" "$script_dir/entrypoint.sh" "$context_dir/"

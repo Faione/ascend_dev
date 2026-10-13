@@ -1,15 +1,18 @@
 services:
   ascend-add-pipeline:
+    # 仅使用已构建的本地镜像，防止 Compose 尝试从远端拉取。
     image: ascend-dev:9.1.0-950-2.10.0
     pull_policy: never
     container_name: ascend-add-pipeline
     working_dir: /workspace/ascend-add-pipeline/examples/add_pipeline
     command: ["sleep", "infinity"]
     devices:
+      # 设备节点和驱动库来自宿主机；按实际驱动安装情况调整。
       - /dev/davinci0:/dev/davinci0
       - /dev/davinci_manager:/dev/davinci_manager
       - /dev/hisi_hdc:/dev/hisi_hdc
     volumes:
+      # 驱动与安装信息只读挂载；项目源码挂载供容器内编译。
       - type: bind
         source: /usr/local/dcmi
         target: /usr/local/dcmi

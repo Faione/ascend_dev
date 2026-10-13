@@ -1,4 +1,5 @@
 ARG BASE_IMAGE=ubuntu:22.04
+# 公共层：系统编译工具与 APT/PIP 镜像配置。
 FROM ${BASE_IMAGE} AS base
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -17,6 +18,7 @@ RUN set -eux; \
     python3 -m pip config --user set global.trusted-host "${mirror#*://}"
 
 FROM base AS torch-install
+# wheel 从构建上下文只读挂载；安装结果进入镜像，原始 wheel 不进入层。
 ARG TORCH_VERSION=2.10.0
 ARG TORCH_NPU_VERSION=2.10.0.post4
 ARG TORCH_WHEEL_FILE=
@@ -31,6 +33,7 @@ RUN --mount=type=bind,source=packages,target=/tmp/cann-packages,readonly \
     python3 -c "import importlib.metadata as m; assert m.version('torch') == '${TORCH_VERSION}+cpu'; assert m.version('torch-npu') == '${TORCH_NPU_VERSION}'"
 
 FROM torch-install AS cann-install
+# .run 也只读挂载。先检查，再分别安装 Toolkit 与型号对应的算子包。
 RUN --mount=type=bind,source=packages,target=/tmp/cann-packages,readonly \
     bash /tmp/cann-packages/toolkit.run --check \
     && bash /tmp/cann-packages/ops.run --check \
@@ -39,6 +42,7 @@ RUN --mount=type=bind,source=packages,target=/tmp/cann-packages,readonly \
     && test -f /usr/local/Ascend/cann/set_env.sh
 
 FROM torch-install AS final
+# 仅复制 CANN 安装目录，避免把安装包和安装阶段临时文件带入最终镜像。
 COPY --from=cann-install /usr/local/Ascend /usr/local/Ascend
 COPY entrypoint.sh /usr/local/bin/ascend-entrypoint
 RUN chmod +x /usr/local/bin/ascend-entrypoint \

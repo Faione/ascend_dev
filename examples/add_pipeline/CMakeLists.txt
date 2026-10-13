@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.18.4)
+# CANN 安装包提供 ASC/AICPU 语言支持；set_env.sh 负责设置查找路径。
 find_package(ASC REQUIRED)
 find_package(AICPU REQUIRED)
 project(AscendAddPipeline LANGUAGES ASC AICPU CXX)
@@ -9,6 +10,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 find_package(Torch REQUIRED)
+# setup.py 从已安装的 torch_npu 推导该路径，不依赖 ops-transformer 源码。
 if(NOT TORCH_NPU_PATH OR NOT EXISTS "${TORCH_NPU_PATH}/include")
     message(FATAL_ERROR "Set TORCH_NPU_PATH to the installed torch_npu package")
 endif()
@@ -22,6 +24,7 @@ if(NOT EXISTS "${BISHENG}")
 endif()
 set(NPU_ARCH "dav-3510" CACHE STRING "Bisheng NPU architecture (950)")
 
+# 内核同时包含 Ascend C、平台查询和 torch-npu C++ 头文件。
 set(ASCEND_INCLUDES
     "${ASCEND_DIR}/include"
     "${ASCEND_DIR}/pkg_inc"
@@ -35,8 +38,8 @@ set(ASCEND_INCLUDES
     "${ASCEND_DIR}/compiler/ascendc/impl/aicore/basic_api"
 )
 
-# The Add source contains both the Ascend C kernel and the PyTorch registration.
-# Compile it with Bisheng, then link the resulting object into the Python module.
+# 用毕昇编译同时包含 AI Core 内核与 PyTorch 注册的源文件。
+# 架构参数只作用于该目标，不能传给普通 Python 扩展入口文件。
 set(CMAKE_CXX_COMPILER "${BISHENG}")
 set(CMAKE_LINKER "${BISHENG}")
 add_library(add_pipeline_obj OBJECT csrc/add_pipeline.cpp)
@@ -48,6 +51,7 @@ separate_arguments(TORCH_COMPILE_FLAGS NATIVE_COMMAND "${TORCH_CXX_FLAGS}")
 target_compile_options(add_pipeline_obj PRIVATE ${TORCH_COMPILE_FLAGS})
 
 add_library(_C SHARED csrc/extension.cpp $<TARGET_OBJECTS:add_pipeline_obj>)
+# _C.so 放入 Python 包目录，导入包即可触发静态算子注册。
 set_target_properties(_C PROPERTIES PREFIX "" SUFFIX ".so" OUTPUT_NAME "_C")
 target_include_directories(_C PRIVATE ${Python3_INCLUDE_DIRS} ${TORCH_INCLUDE_DIRS} ${ASCEND_INCLUDES})
 target_compile_options(_C PRIVATE ${TORCH_COMPILE_FLAGS})

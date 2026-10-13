@@ -8,6 +8,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 if (-not $DownloadDir) {
+    # 默认查找当前 Windows 用户的浏览器下载目录。
     $profileDir = [Environment]::GetFolderPath('UserProfile')
     if (-not $profileDir) { throw 'Set -DownloadDir to your browser download directory.' }
     $DownloadDir = Join-Path -Path $profileDir -ChildPath 'Downloads'
@@ -21,6 +22,7 @@ foreach ($command in @('ssh', 'scp')) {
     if (-not (Get-Command $command -ErrorAction SilentlyContinue)) { throw "Missing $command. Enable Windows OpenSSH Client." }
 }
 $names = @(
+    # 一次上传 Toolkit、910/910B/950 算子包及两个 Python wheel。
     'Ascend-cann-toolkit_9.1.0_linux-x86_64.run',
     'Ascend-cann-910-ops_9.1.0_linux-x86_64.run',
     'Ascend-cann-910b-ops_9.1.0_linux-x86_64.run',
@@ -29,6 +31,7 @@ $names = @(
     'torch_npu-2.10.0.post4-cp310-cp310-manylinux_2_28_x86_64.whl'
 )
 foreach ($name in $names) {
+    # 上传前先确认文件存在，并打印本地 SHA256 供人工核对。
     $file = Join-Path -Path $DownloadDir -ChildPath $name
     if (-not (Test-Path -LiteralPath $file -PathType Leaf) -or (Get-Item -LiteralPath $file).Length -eq 0) {
         throw "Missing or empty file: $file"
@@ -48,6 +51,7 @@ try {
 }
 $remotePaths = @($names | ForEach-Object { "'$remoteDir/$_'" })
 $remoteHashes = & ssh $Server ('sha256sum ' + ($remotePaths -join ' '))
+# 逐文件对比本地与服务器哈希，避免大安装包在传输中损坏。
 if ($LASTEXITCODE -ne 0) { throw 'Remote SHA256 check failed.' }
 foreach ($name in $names) {
     $expected = (Get-FileHash -Algorithm SHA256 -LiteralPath (Join-Path $DownloadDir $name)).Hash.ToLowerInvariant()

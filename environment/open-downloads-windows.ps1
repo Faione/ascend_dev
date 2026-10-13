@@ -1,4 +1,5 @@
 $cannBase = 'https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/CANN/CANN%209.1.0'
+# 只在浏览器打开下载页；文件仍需由用户保存到同一个本地目录。
 $urls = @(
     "$cannBase/Ascend-cann-toolkit_9.1.0_linux-x86_64.run",
     "$cannBase/Ascend-cann-910-ops_9.1.0_linux-x86_64.run",

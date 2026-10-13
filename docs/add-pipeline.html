@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ascend Add Pipeline 运行示意</title>
+<style>
+:root{color-scheme:light dark;--bg:#f5f7fb;--panel:#fff;--text:#172135;--muted:#526079;--line:#d6dce8;--input:#2874bd;--compute:#8b5fbf;--output:#218968;--active:#e8f2fb;--slot:#eef1f6}
+@media(prefers-color-scheme:dark){:root{--bg:#121824;--panel:#1d2634;--text:#edf2fb;--muted:#b8c4d8;--line:#39465a;--input:#72b5f2;--compute:#c49bf5;--output:#6dd7aa;--active:#263c55;--slot:#2a3646}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}main{max-width:1080px;margin:auto;padding:28px 20px 48px}h1{font-size:1.65rem;margin:0 0 6px}h2{font-size:1.1rem;margin:0 0 12px}p{margin:0 0 20px;color:var(--muted)}.controls{display:flex;flex-wrap:wrap;align-items:end;gap:12px;margin:20px 0}.control{display:grid;gap:4px;font-size:.9rem}.control select,button{font:inherit;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--text);padding:9px 12px}button{min-width:86px}button:hover:not(:disabled){background:var(--active)}button:disabled{opacity:.5}button:focus-visible,select:focus-visible{outline:2px solid var(--input);outline-offset:2px}.panel{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:18px;margin:16px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.tile,.core,.slot{border:1px solid var(--line);border-radius:7px;padding:7px 9px;min-width:74px;text-align:center;background:var(--slot);font-size:.88rem}.tile.active,.core.active{background:var(--active);border-color:var(--input)}.tile.done{border-color:var(--output)}.tile small,.core small{display:block;color:var(--muted)}.flow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stage{border:2px solid var(--line);border-radius:10px;padding:12px;min-height:110px}.stage.active.input{border-color:var(--input)}.stage.active.compute{border-color:var(--compute)}.stage.active.output{border-color:var(--output)}.stage strong{display:block}.stage span{font-size:.88rem;color:var(--muted)}.buffers{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.buffer{border:1px solid var(--line);border-radius:9px;padding:10px}.buffer strong{display:block;margin-bottom:8px}.slot{display:inline-block;margin:0 5px 5px 0;min-width:58px}.slot.full{background:var(--active);border-color:var(--input)}.slot.processing{border-color:var(--compute);background:var(--active)}.slot.output{border-color:var(--output);background:var(--active)}.status{min-height:50px;font-weight:500}.muted{color:var(--muted);font-size:.88rem}.legend{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:.85rem}.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px}.legend .a{background:var(--input)}.legend .b{background:var(--compute)}.legend .c{background:var(--output)}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}@media(max-width:680px){.grid{grid-template-columns:1fr}.flow{grid-template-columns:1fr}.stage{min-height:70px}.buffers{grid-template-columns:1fr}.controls{align-items:stretch}}
+</style>
+</head>
+<body>
+<main>
+<h1>Add Pipeline：从全局内存到双缓冲队列</h1>
+<p>逐步查看一个 AI Core 如何处理分配给它的 tile。图示对应 <code>add_pipeline.cpp</code> 的分块与队列操作；阶段切换仅为教学示意，并非硬件耗时或并发度测量。</p>
+<div class="controls">
+<label class="control">向量长度<select id="length"><option value="1025">1025（尾 tile 1 个元素）</option><option value="4097">4097（跨核、尾 tile）</option><option value="8192">8192（整 tile）</option></select></label>
+<label class="control">演示核数<select id="cores"><option value="2">2 核</option><option value="4">4 核</option></select></label>
+<label class="control">观察的核<select id="core"></select></label>
+<button id="prev" type="button">上一步</button><button id="next" type="button">下一步</button><button id="play" type="button">自动播放</button>
+</div>
+<div class="grid">
+<section class="panel"><h2>GM 中的分块与核分配</h2><div id="tiles" class="row" aria-live="polite"></div><p id="partition" class="muted" style="margin:12px 0 0"></p></section>
+<section class="panel"><h2>当前 AI Core</h2><div id="coreView" class="row"></div><p class="muted" style="margin:12px 0 0">每核获得连续 tile；实际核数由设备的 AIV 数量决定。</p></section>
+</div>
+<section class="panel"><h2>当前 tile 的三阶段</h2><div class="flow" id="flow">
+<div class="stage input" data-phase="0"><strong>1 · CopyIn</strong><span>GM 的 X、Y → qx/qy 的空闲 UB 槽；完成后 EnQue。</span></div>
+<div class="stage compute" data-phase="1"><strong>2 · Compute</strong><span>DeQue X/Y；Add 写入 qz 槽；释放输入槽。</span></div>
+<div class="stage output" data-phase="2"><strong>3 · CopyOut</strong><span>DeQue Z；UB → GM 的 Z；释放输出槽。</span></div>
+</div></section>
+<section class="panel"><h2>UB 队列：每队列 2 个槽</h2><div class="buffers"><div class="buffer"><strong>qx · X 输入</strong><div id="qx"></div></div><div class="buffer"><strong>qy · Y 输入</strong><div id="qy"></div></div><div class="buffer"><strong>qz · Z 输出</strong><div id="qz"></div></div></div></section>
+<section class="panel"><div class="status" id="status" role="status" aria-live="polite"></div><div class="legend"><span><i class="a"></i>数据已入队</span><span><i class="b"></i>计算中</span><span><i class="c"></i>输出待回写</span></div></section>
+</main>
+<script>
+(()=>{
+const TILE=1024, $=id=>document.getElementById(id);
+const controls={length:$('length'),cores:$('cores'),core:$('core')};
+let step=0,timer=null;
+function model(){const n=+controls.length.value,maxC=+controls.cores.value,tiles=Math.ceil(n/TILE),blocks=Math.min(maxC,tiles),perCore=Math.ceil(tiles/blocks),used=Math.ceil(tiles/perCore);return {n,tiles,perCore,used,core:+controls.core.value,start:(+controls.core.value)*perCore,end:Math.min(tiles,(+controls.core.value+1)*perCore)};}
+function stop(){if(timer){clearInterval(timer);timer=null}$('play').textContent='自动播放'}
+function rebuild(){stop();const m=model();controls.core.innerHTML=Array.from({length:m.used},(_,i)=>`<option value="${i}">Core ${i}</option>`).join('');step=0;render()}
+function slotHTML(label,kind){return `<span class="slot ${kind}">${label}</span>`}
+function render(){const m=model(),count=m.end-m.start,total=count*3,finished=step>=total,index=Math.min(Math.floor(step/3),Math.max(0,count-1)),phase=step%3,tile=m.start+index,slot=index%2,tail=Math.min(TILE,m.n-tile*TILE);
+$('partition').textContent=`总计 ${m.n} 个 float32、${m.tiles} 个 tile；每核最多 ${m.perCore} 个 tile。Core ${m.core} 处理 tile ${m.start}–${m.end-1}。`;
+$('tiles').innerHTML=Array.from({length:m.tiles},(_,i)=>{const owner=Math.floor(i/m.perCore),len=Math.min(TILE,m.n-i*TILE),active=!finished&&i===tile&&owner===m.core,done=owner===m.core&&(finished||i<tile);return `<div class="tile ${active?'active':''} ${done?'done':''}">tile ${i}<small>${len} 元素 · C${owner}</small></div>`}).join('');
+$('coreView').innerHTML=Array.from({length:m.used},(_,i)=>`<div class="core ${i===m.core?'active':''}">Core ${i}<small>tile ${i*m.perCore}–${Math.min(m.tiles,(i+1)*m.perCore)-1}</small></div>`).join('');
+document.querySelectorAll('.stage').forEach(el=>el.classList.toggle('active',!finished&&+el.dataset.phase===phase));
+for(const q of ['qx','qy','qz']){let kind='';if(!finished){if(q==='qz'&&phase===1)kind='processing';else if(q==='qz'&&phase===2)kind='output';else if(q!=='qz'&&phase===0)kind='full';else if(q!=='qz'&&phase===1)kind='processing'}$(q).innerHTML=[0,1].map(i=>slotHTML(`槽 ${i}${i===slot&&!finished&&kind?' · tile '+tile:''}`,i===slot?kind:'')).join('')}
+const messages=[`CopyIn：从 X/Y 的 GM 偏移 ${tile*TILE} 搬入 ${tail} 个元素，使用槽 ${slot}。`,`Compute：DeQue X/Y，计算 ${tail} 次加法；Z 入队，输入槽 ${slot} 释放。`,`CopyOut：把 ${tail} 个结果写回 Z 的 GM，输出槽 ${slot} 释放。`];
+$('status').textContent=finished?`Core ${m.core} 完成 ${count} 个 tile；切换核可查看其他区间。`:`第 ${step+1}/${total} 步 · ${messages[phase]}`;
+$('prev').disabled=step===0;$('next').disabled=finished;
+}
+controls.length.addEventListener('change',rebuild);controls.cores.addEventListener('change',rebuild);controls.core.addEventListener('change',()=>{stop();step=0;render()});$('prev').addEventListener('click',()=>{stop();step=Math.max(0,step-1);render()});$('next').addEventListener('click',()=>{step++;render();if($('next').disabled)stop()});$('play').addEventListener('click',()=>{if(timer){stop();return}if($('next').disabled)step=0;render();$('play').textContent='暂停';timer=setInterval(()=>{step++;render();if($('next').disabled)stop()},850)});rebuild();
+})();
+</script>
+</body>
+</html>

@@ -1,10 +1,12 @@
 import argparse
 import torch
 import torch_npu
+# 导入 _C.so 后，TORCH_LIBRARY 中定义的算子才会出现在 torch.ops 下。
 import ascend_add_pipeline
 
 
 def print_table(rows):
+    """按最长字段宽度排版，成功与失败都打印同一种结果表。"""
     heading = ("Check", "Result / Details")
     width = max(len(name) for name, _ in [heading, *rows])
     value_width = max(len(value) for _, value in [heading, *rows])
@@ -28,6 +30,7 @@ def main():
     stage = "NPU available"
 
     def expect_error(label, x, y):
+        """确认无效输入由宿主侧检查拒绝，而不是悄悄得到错误结果。"""
         try:
             op(x, y)
         except RuntimeError:
@@ -42,7 +45,7 @@ def main():
         torch.manual_seed(2026)
         op = torch.ops.ascend_add_pipeline.add_pipeline
 
-        # 空向量、32B 边界、tile 边界、多核多 tile。
+        # 覆盖空向量、32B 边界、1024 元素 tile 边界和多核多 tile。
         lengths = [0, 1, 7, 8, 9, 31, 32, 33, 1023, 1024, 1025,
                    8192, 65537, 1048576, 1048583]
         for n in lengths:
@@ -52,6 +55,7 @@ def main():
             x = x_cpu.to(device)
             y = y_cpu.to(device)
             ref = x_cpu + y_cpu
+            # 重复执行能暴露队列槽复用/同步问题；每次都同步后读取输出。
             for _ in range(3):
                 out = op(x, y)
                 torch.npu.synchronize()
@@ -60,6 +64,7 @@ def main():
                 assert out.device == x.device
                 torch.testing.assert_close(got, ref, rtol=1e-6, atol=1e-6)
             torch.testing.assert_close(x.cpu(), x_cpu, rtol=0, atol=0)
+            # 输入也必须保持不变；Add 不能原地覆盖 X 或 Y。
             torch.testing.assert_close(y.cpu(), y_cpu, rtol=0, atol=0)
             max_abs = (got - ref).abs().max().item() if n else 0.0
             rows.append((stage, f"PASS (max_abs_error={max_abs:.3e})"))
@@ -76,6 +81,7 @@ def main():
                    ("2-D", a.reshape(4, 4), a.reshape(4, 4)),
                    ("requires_grad", a.clone().requires_grad_(), a)]
         for label, left, right in invalid:
+            # 这些输入违反 CheckInputs 的契约，应抛出 RuntimeError。
             stage = f"Reject {label}"
             expect_error(label, left, right)
             rows.append((stage, "PASS"))
@@ -83,6 +89,7 @@ def main():
         torch.npu.synchronize()
         rows.append(("Overall", "PASS"))
     except Exception as exc:
+        # 即使验证中断，finally 仍输出已完成项和失败阶段。
         message = str(exc).splitlines()
         detail = f"{type(exc).__name__}: {message[0] if message else '(no detail)'}"[:100]
         rows.extend([(stage, f"FAIL ({detail})"), ("Overall", "FAIL")])
