@@ -1,0 +1,31 @@
+services:
+  ascend-add-pipeline:
+    image: ascend-dev:9.1.0-950-2.10.0
+    pull_policy: never
+    container_name: ascend-add-pipeline
+    working_dir: /workspace/ascend-add-pipeline/examples/add_pipeline
+    command: ["sleep", "infinity"]
+    devices:
+      - /dev/davinci0:/dev/davinci0
+      - /dev/davinci_manager:/dev/davinci_manager
+      - /dev/hisi_hdc:/dev/hisi_hdc
+    volumes:
+      - type: bind
+        source: /usr/local/dcmi
+        target: /usr/local/dcmi
+        read_only: true
+      - type: bind
+        source: /usr/local/Ascend/driver/lib64
+        target: /usr/local/Ascend/driver/lib64
+        read_only: true
+      - type: bind
+        source: /usr/local/Ascend/driver/version.info
+        target: /usr/local/Ascend/driver/version.info
+        read_only: true
+      - type: bind
+        source: /etc/ascend_install.info
+        target: /etc/ascend_install.info
+        read_only: true
+      - type: bind
+        source: ${PROJECT_ROOT:?set PROJECT_ROOT to the absolute ascend-add-pipeline path}
+        target: /workspace/ascend-add-pipeline
