@@ -62,7 +62,7 @@ python3 verify_add_pipeline.py --device 0
 
 编译使用 CANN 的 Bisheng、PyTorch 和 torch-npu。`CMakeLists.txt` 直接编译本目录的 `csrc/add_pipeline.cpp`，目标架构是 950 的 `dav-3510`；无需执行 `ops-transformer/build.sh`。`verify_add_pipeline.py` 以表格显示 NPU 可用性、不同长度的 Add 结果、输入检查和最终结果；期望各行 `PASS`，数值误差在 `torch.testing.assert_close` 阈值内。内核采用双缓冲 `TPipe/TQue`，每轮依次 CopyIn、Compute、CopyOut，支持非整 tile 长度。
 
-可在浏览器打开 [Add Pipeline 动态示意](docs/add-pipeline.html)，切换向量长度、演示核数和观察的核，逐步查看各 tile 的 CopyIn、Compute、CopyOut 与两个 UB 槽的使用。页面是代码流程说明，不代表真实硬件的执行时序或性能数据。
+可在浏览器打开 [Add Pipeline 动态示意](docs/add-pipeline.html)，切换向量长度、演示核数和观察的核，沿主机 DRAM → NPU GM → AI Core UB → 向量计算单元 → NPU GM → 主机 DRAM 逐步查看数据流。页面区分验证脚本的 H2D/D2H 与内核的 CopyIn/Compute/CopyOut；它是代码流程说明，不代表真实硬件的执行时序或性能数据。
 
 如果 CMake 找不到 `ASC`/`AICPU` 或 Bisheng，先在容器中检查 `ASCEND_HOME_PATH` 与 `/usr/local/Ascend/cann/set_env.sh`。若 `opdev/bfloat16.h` 缺失，检查 CANN Toolkit 安装和头文件路径；本示例未依赖 `ops-transformer` 的 `opbase`。如 `torch.npu.is_available()` 为 false，优先核对宿主机驱动、Compose 设备映射和驱动库路径。
 

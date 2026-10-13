@@ -3,55 +3,68 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ascend Add Pipeline 运行示意</title>
+<title>Ascend Add Pipeline 数据流</title>
 <style>
-:root{color-scheme:light dark;--bg:#f5f7fb;--panel:#fff;--text:#172135;--muted:#526079;--line:#d6dce8;--input:#2874bd;--compute:#8b5fbf;--output:#218968;--active:#e8f2fb;--slot:#eef1f6}
-@media(prefers-color-scheme:dark){:root{--bg:#121824;--panel:#1d2634;--text:#edf2fb;--muted:#b8c4d8;--line:#39465a;--input:#72b5f2;--compute:#c49bf5;--output:#6dd7aa;--active:#263c55;--slot:#2a3646}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}main{max-width:1080px;margin:auto;padding:28px 20px 48px}h1{font-size:1.65rem;margin:0 0 6px}h2{font-size:1.1rem;margin:0 0 12px}p{margin:0 0 20px;color:var(--muted)}.controls{display:flex;flex-wrap:wrap;align-items:end;gap:12px;margin:20px 0}.control{display:grid;gap:4px;font-size:.9rem}.control select,button{font:inherit;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--text);padding:9px 12px}button{min-width:86px}button:hover:not(:disabled){background:var(--active)}button:disabled{opacity:.5}button:focus-visible,select:focus-visible{outline:2px solid var(--input);outline-offset:2px}.panel{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:18px;margin:16px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.tile,.core,.slot{border:1px solid var(--line);border-radius:7px;padding:7px 9px;min-width:74px;text-align:center;background:var(--slot);font-size:.88rem}.tile.active,.core.active{background:var(--active);border-color:var(--input)}.tile.done{border-color:var(--output)}.tile small,.core small{display:block;color:var(--muted)}.flow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stage{border:2px solid var(--line);border-radius:10px;padding:12px;min-height:110px}.stage.active.input{border-color:var(--input)}.stage.active.compute{border-color:var(--compute)}.stage.active.output{border-color:var(--output)}.stage strong{display:block}.stage span{font-size:.88rem;color:var(--muted)}.buffers{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.buffer{border:1px solid var(--line);border-radius:9px;padding:10px}.buffer strong{display:block;margin-bottom:8px}.slot{display:inline-block;margin:0 5px 5px 0;min-width:58px}.slot.full{background:var(--active);border-color:var(--input)}.slot.processing{border-color:var(--compute);background:var(--active)}.slot.output{border-color:var(--output);background:var(--active)}.status{min-height:50px;font-weight:500}.muted{color:var(--muted);font-size:.88rem}.legend{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:.85rem}.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px}.legend .a{background:var(--input)}.legend .b{background:var(--compute)}.legend .c{background:var(--output)}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}@media(max-width:680px){.grid{grid-template-columns:1fr}.flow{grid-template-columns:1fr}.stage{min-height:70px}.buffers{grid-template-columns:1fr}.controls{align-items:stretch}}
+:root{color-scheme:light dark;--bg:#f5f7fb;--panel:#fff;--ink:#172135;--muted:#526079;--line:#ccd5e2;--track:#8290a4;--host:#e9eff8;--device:#edf7f3;--core:#f5eefb;--storage:#e7f1fb;--vector:#f7ecfa;--active:#176db5;--result:#168065}
+@media(prefers-color-scheme:dark){:root{--bg:#121824;--panel:#1d2634;--ink:#edf2fb;--muted:#b8c4d8;--line:#45536a;--track:#9ba9bd;--host:#25364c;--device:#203d35;--core:#392d45;--storage:#263c55;--vector:#463251;--active:#83c7ff;--result:#75d8b3}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}main{max-width:1240px;margin:auto;padding:28px 20px 48px}h1{font-size:1.65rem;margin:0 0 6px}h2{font-size:1.05rem;margin:0 0 12px}p{margin:0 0 16px;color:var(--muted)}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.controls{display:flex;align-items:end;flex-wrap:wrap;gap:10px;margin:20px 0}.control{display:grid;gap:4px;font-size:.9rem}.control select,button{font:inherit;padding:8px 11px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}button{min-width:78px}button:hover:not(:disabled){background:var(--storage)}button:focus-visible,select:focus-visible{outline:2px solid var(--active);outline-offset:2px}button:disabled{opacity:.5}.panel{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:18px;margin:14px 0}.diagram-wrap{overflow-x:auto}.diagram{display:block;width:100%;min-width:1040px;height:auto}.zone{stroke:var(--line);stroke-width:1.5}.zone.host{fill:var(--host)}.zone.device{fill:var(--device)}.zone.core{fill:var(--core)}.node{stroke:var(--line);stroke-width:1.5;fill:var(--panel)}.node.storage{fill:var(--storage)}.node.vector{fill:var(--vector)}.diagram text{fill:var(--ink);font:500 14px system-ui,sans-serif}.diagram .small{fill:var(--muted);font:400 12px system-ui,sans-serif}.diagram .zone-label{font:500 16px system-ui,sans-serif}.route{fill:none;stroke:var(--track);stroke-width:3;marker-end:url(#arrow)}.route.active{stroke:var(--active);stroke-width:5;stroke-dasharray:10 6;animation:travel .65s linear infinite;marker-end:url(#arrow-active)}.route.done{stroke:var(--result);marker-end:url(#arrow-done)}@keyframes travel{to{stroke-dashoffset:-16}}@media(prefers-reduced-motion:reduce){.route.active{animation:none;stroke-dasharray:none}}.route-label{fill:var(--muted);font:400 12px system-ui,sans-serif}.route-label.active{fill:var(--active);font-weight:500}.status{font-weight:500;min-height:48px}.details{font-size:.9rem;color:var(--muted)}.tiles{display:flex;flex-wrap:wrap;gap:6px}.tile{border:1px solid var(--line);border-radius:7px;padding:6px 9px;font-size:.86rem;background:var(--panel)}.tile.active{border-color:var(--active);background:var(--storage)}.tile.done{border-color:var(--result)}.tile small{display:block;color:var(--muted)}.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.82rem;color:var(--muted);margin-top:12px}.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:middle}.legend .host{background:var(--host)}.legend .device{background:var(--device)}.legend .core{background:var(--core)}@media(max-width:680px){.controls{align-items:stretch}.panel{padding:14px}}
 </style>
 </head>
 <body>
 <main>
-<h1>Add Pipeline：从全局内存到双缓冲队列</h1>
-<p>逐步查看一个 AI Core 如何处理分配给它的 tile。图示对应 <code>add_pipeline.cpp</code> 的分块与队列操作；阶段切换仅为教学示意，并非硬件耗时或并发度测量。</p>
+<h1>Add Pipeline：设备与存储间的数据流</h1>
+<p>从 PyTorch 张量到 NPU 计算结果，逐步区分主机 DRAM、NPU 全局内存（GM）、AI Core 的片上统一缓冲（UB）与向量计算单元。H2D/D2H 由验证脚本触发；<code>add_pipeline.cpp</code> 内核只执行 CopyIn、Compute、CopyOut。</p>
 <div class="controls">
-<label class="control">向量长度<select id="length"><option value="1025">1025（尾 tile 1 个元素）</option><option value="4097">4097（跨核、尾 tile）</option><option value="8192">8192（整 tile）</option></select></label>
+<label class="control">向量长度<select id="length"><option value="1025">1025 · 尾 tile</option><option value="4097">4097 · 跨核</option><option value="8192">8192 · 整 tile</option></select></label>
 <label class="control">演示核数<select id="cores"><option value="2">2 核</option><option value="4">4 核</option></select></label>
 <label class="control">观察的核<select id="core"></select></label>
 <button id="prev" type="button">上一步</button><button id="next" type="button">下一步</button><button id="play" type="button">自动播放</button>
 </div>
-<div class="grid">
-<section class="panel"><h2>GM 中的分块与核分配</h2><div id="tiles" class="row" aria-live="polite"></div><p id="partition" class="muted" style="margin:12px 0 0"></p></section>
-<section class="panel"><h2>当前 AI Core</h2><div id="coreView" class="row"></div><p class="muted" style="margin:12px 0 0">每核获得连续 tile；实际核数由设备的 AIV 数量决定。</p></section>
-</div>
-<section class="panel"><h2>当前 tile 的三阶段</h2><div class="flow" id="flow">
-<div class="stage input" data-phase="0"><strong>1 · CopyIn</strong><span>GM 的 X、Y → qx/qy 的空闲 UB 槽；完成后 EnQue。</span></div>
-<div class="stage compute" data-phase="1"><strong>2 · Compute</strong><span>DeQue X/Y；Add 写入 qz 槽；释放输入槽。</span></div>
-<div class="stage output" data-phase="2"><strong>3 · CopyOut</strong><span>DeQue Z；UB → GM 的 Z；释放输出槽。</span></div>
-</div></section>
-<section class="panel"><h2>UB 队列：每队列 2 个槽</h2><div class="buffers"><div class="buffer"><strong>qx · X 输入</strong><div id="qx"></div></div><div class="buffer"><strong>qy · Y 输入</strong><div id="qy"></div></div><div class="buffer"><strong>qz · Z 输出</strong><div id="qz"></div></div></div></section>
-<section class="panel"><div class="status" id="status" role="status" aria-live="polite"></div><div class="legend"><span><i class="a"></i>数据已入队</span><span><i class="b"></i>计算中</span><span><i class="c"></i>输出待回写</span></div></section>
+<section class="panel"><h2>传输路径</h2><div class="diagram-wrap"><svg class="diagram" viewBox="0 0 1200 400" role="img" aria-labelledby="diagram-title diagram-desc">
+<title id="diagram-title">Add Pipeline 的主机、NPU 全局内存和 AI Core 数据流图</title>
+<desc id="diagram-desc">数据从主机 DRAM 经 H2D 到 NPU GM，再由 CopyIn 到 AI Core UB 输入队列，经向量 Add 写入 UB 输出队列，由 CopyOut 返回 GM，验证脚本最后 D2H 读取结果。</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="var(--track)"/></marker><marker id="arrow-active" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="var(--active)"/></marker><marker id="arrow-done" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="var(--result)"/></marker></defs>
+<rect class="zone host" x="12" y="25" width="180" height="330" rx="15"/><text class="zone-label" x="28" y="55">主机 · CPU</text><text class="small" x="28" y="75">PyTorch / DRAM</text>
+<rect class="zone device" x="252" y="25" width="935" height="330" rx="15"/><text class="zone-label" x="270" y="55">Ascend NPU · 设备</text><text class="small" x="270" y="75">GM 与 AI Core 在设备内；H2D/D2H 跨设备边界</text>
+<rect class="zone core" x="495" y="105" width="490" height="235" rx="14"/><text class="zone-label" x="512" y="134" id="core-label">AI Core 0 · 片上计算</text><text class="small" x="512" y="152">UB 队列与向量计算单元</text>
+<rect class="node storage" x="35" y="160" width="135" height="70" rx="10"/><text x="102" y="186" text-anchor="middle">X/Y · DRAM</text><text class="small" x="102" y="206" text-anchor="middle">CPU 张量</text>
+<rect class="node storage" x="280" y="160" width="145" height="70" rx="10"/><text x="352" y="186" text-anchor="middle">X/Y · GM</text><text class="small" x="352" y="206" text-anchor="middle">设备全局内存</text>
+<rect class="node storage" x="518" y="177" width="120" height="58" rx="10"/><text x="578" y="199" text-anchor="middle">qx/qy · UB</text><text class="small" x="578" y="218" text-anchor="middle" id="input-slot">输入槽 0/1</text>
+<rect class="node vector" x="680" y="177" width="105" height="58" rx="10"/><text x="732" y="199" text-anchor="middle">Vector Add</text><text class="small" x="732" y="218" text-anchor="middle">X + Y → Z</text>
+<rect class="node storage" x="825" y="177" width="125" height="58" rx="10"/><text x="887" y="199" text-anchor="middle">qz · UB</text><text class="small" x="887" y="218" text-anchor="middle" id="output-slot">输出槽 0/1</text>
+<rect class="node storage" x="1030" y="160" width="135" height="70" rx="10"/><text x="1097" y="186" text-anchor="middle">Z · GM</text><text class="small" x="1097" y="206" text-anchor="middle">设备全局内存</text>
+<rect class="node storage" x="35" y="265" width="135" height="60" rx="10"/><text x="102" y="290" text-anchor="middle">Z · DRAM</text><text class="small" x="102" y="309" text-anchor="middle">CPU 校验结果</text>
+<path id="h2d" class="route" d="M170 194 H276"/><text id="label-h2d" class="route-label" x="214" y="180" text-anchor="middle">H2D</text>
+<path id="copyin" class="route" d="M425 194 H514"/><text id="label-copyin" class="route-label" x="469" y="180" text-anchor="middle">CopyIn</text>
+<path id="compute-in" class="route" d="M638 205 H676"/><path id="compute-out" class="route" d="M785 205 H821"/><text id="label-compute" class="route-label" x="732" y="265" text-anchor="middle">Compute · Add</text>
+<path id="copyout" class="route" d="M950 194 H1026"/><text id="label-copyout" class="route-label" x="988" y="180" text-anchor="middle">CopyOut</text>
+<path id="d2h" class="route" d="M1097 233 V372 H102 V329"/><text id="label-d2h" class="route-label" x="602" y="387" text-anchor="middle">D2H · 仅验证脚本读回</text>
+</svg></div><div class="legend"><span><i class="host"></i>主机内存</span><span><i class="device"></i>NPU 设备</span><span><i class="core"></i>AI Core 片上区域</span></div></section>
+<section class="panel"><div id="status" class="status" role="status" aria-live="polite"></div><div id="details" class="details"></div></section>
+<section class="panel"><h2>GM 中的 tile 分配</h2><div id="tiles" class="tiles" aria-live="polite"></div><p id="partition" class="details" style="margin:10px 0 0"></p></section>
+<p>每个 tile 最多 1024 个 float32，qx、qy、qz 各有 2 个 UB 缓冲槽；图中“槽 0/1”随 tile 轮换。此逐步示意不表示实际硬件耗时、流水重叠程度或 DMA 通道数量。</p>
 </main>
 <script>
 (()=>{
 const TILE=1024, $=id=>document.getElementById(id);
-const controls={length:$('length'),cores:$('cores'),core:$('core')};
+const control={length:$('length'),cores:$('cores'),core:$('core')};
+const routes={upload:['h2d'],input:['copyin'],compute:['compute-in','compute-out'],output:['copyout'],download:['d2h']};
 let step=0,timer=null;
-function model(){const n=+controls.length.value,maxC=+controls.cores.value,tiles=Math.ceil(n/TILE),blocks=Math.min(maxC,tiles),perCore=Math.ceil(tiles/blocks),used=Math.ceil(tiles/perCore);return {n,tiles,perCore,used,core:+controls.core.value,start:(+controls.core.value)*perCore,end:Math.min(tiles,(+controls.core.value+1)*perCore)};}
+function model(){const n=+control.length.value,tiles=Math.ceil(n/TILE),maxC=+control.cores.value,perCore=Math.ceil(tiles/Math.min(maxC,tiles)),used=Math.ceil(tiles/perCore),core=+control.core.value;return {n,tiles,perCore,used,core,start:core*perCore,end:Math.min(tiles,(core+1)*perCore)};}
 function stop(){if(timer){clearInterval(timer);timer=null}$('play').textContent='自动播放'}
-function rebuild(){stop();const m=model();controls.core.innerHTML=Array.from({length:m.used},(_,i)=>`<option value="${i}">Core ${i}</option>`).join('');step=0;render()}
-function slotHTML(label,kind){return `<span class="slot ${kind}">${label}</span>`}
-function render(){const m=model(),count=m.end-m.start,total=count*3,finished=step>=total,index=Math.min(Math.floor(step/3),Math.max(0,count-1)),phase=step%3,tile=m.start+index,slot=index%2,tail=Math.min(TILE,m.n-tile*TILE);
-$('partition').textContent=`总计 ${m.n} 个 float32、${m.tiles} 个 tile；每核最多 ${m.perCore} 个 tile。Core ${m.core} 处理 tile ${m.start}–${m.end-1}。`;
-$('tiles').innerHTML=Array.from({length:m.tiles},(_,i)=>{const owner=Math.floor(i/m.perCore),len=Math.min(TILE,m.n-i*TILE),active=!finished&&i===tile&&owner===m.core,done=owner===m.core&&(finished||i<tile);return `<div class="tile ${active?'active':''} ${done?'done':''}">tile ${i}<small>${len} 元素 · C${owner}</small></div>`}).join('');
-$('coreView').innerHTML=Array.from({length:m.used},(_,i)=>`<div class="core ${i===m.core?'active':''}">Core ${i}<small>tile ${i*m.perCore}–${Math.min(m.tiles,(i+1)*m.perCore)-1}</small></div>`).join('');
-document.querySelectorAll('.stage').forEach(el=>el.classList.toggle('active',!finished&&+el.dataset.phase===phase));
-for(const q of ['qx','qy','qz']){let kind='';if(!finished){if(q==='qz'&&phase===1)kind='processing';else if(q==='qz'&&phase===2)kind='output';else if(q!=='qz'&&phase===0)kind='full';else if(q!=='qz'&&phase===1)kind='processing'}$(q).innerHTML=[0,1].map(i=>slotHTML(`槽 ${i}${i===slot&&!finished&&kind?' · tile '+tile:''}`,i===slot?kind:'')).join('')}
-const messages=[`CopyIn：从 X/Y 的 GM 偏移 ${tile*TILE} 搬入 ${tail} 个元素，使用槽 ${slot}。`,`Compute：DeQue X/Y，计算 ${tail} 次加法；Z 入队，输入槽 ${slot} 释放。`,`CopyOut：把 ${tail} 个结果写回 Z 的 GM，输出槽 ${slot} 释放。`];
-$('status').textContent=finished?`Core ${m.core} 完成 ${count} 个 tile；切换核可查看其他区间。`:`第 ${step+1}/${total} 步 · ${messages[phase]}`;
-$('prev').disabled=step===0;$('next').disabled=finished;
+function rebuild(){stop();const m=model();control.core.innerHTML=Array.from({length:m.used},(_,i)=>`<option value="${i}">Core ${i}</option>`).join('');step=0;render()}
+function render(){const m=model(),count=m.end-m.start,last=3*count+1,kind=step===0?'upload':step===last?'download':['input','compute','output'][(step-1)%3],index=Math.max(0,Math.min(count-1,Math.floor((step-1)/3))),tile=m.start+index,slot=index%2,elements=Math.min(TILE,m.n-tile*TILE),offset=tile*TILE;
+const order=['upload','input','compute','output','download'],current=order.indexOf(kind),active=new Set(routes[kind]);
+for(const [name,ids] of Object.entries(routes)){for(const id of ids){const el=$(id);el.classList.toggle('active',active.has(id));el.classList.toggle('done',order.indexOf(name)<current)}const label=$('label-'+(name==='input'?'copyin':name==='output'?'copyout':name==='compute'?'compute':name==='upload'?'h2d':'d2h'));label.classList.toggle('active',name===kind)}
+$('core-label').textContent=`AI Core ${m.core} · 片上计算`;
+$('input-slot').textContent=kind==='input'||kind==='compute'?`槽 ${slot} · tile ${tile}`:'输入槽 0/1';
+$('output-slot').textContent=kind==='compute'||kind==='output'?`槽 ${slot} · tile ${tile}`:'输出槽 0/1';
+$('tiles').innerHTML=Array.from({length:m.tiles},(_,i)=>{const owner=Math.floor(i/m.perCore),len=Math.min(TILE,m.n-i*TILE),selected=step>0&&step<last&&i===tile&&owner===m.core,done=owner===m.core&&(step===last||i<tile);return `<div class="tile ${selected?'active':''} ${done?'done':''}">tile ${i}<small>${len} 元素 · Core ${owner}</small></div>`}).join('');
+$('partition').textContent=`共 ${m.tiles} 个 tile；每核最多 ${m.perCore} 个。当前 Core ${m.core} 负责 tile ${m.start}–${m.end-1}。实际核数由设备 AIV 数量决定。`;
+const messages={upload:['H2D：验证脚本把 X/Y 从主机 DRAM 复制到 NPU GM。','对应 verify_add_pipeline.py 的 x_cpu.to(device) 与 y_cpu.to(device)。'],input:[`CopyIn：从 GM 偏移 ${offset} 读取 ${elements} 个 X/Y 元素，放入 UB 槽 ${slot}。`,'DataCopyPad 后入队 qx/qy；数据始终在 NPU 设备内部。'],compute:[`Compute：向量单元对 tile ${tile} 执行 ${elements} 次加法，结果写入 qz 槽 ${slot}。`,'qx/qy 出队后释放输入槽；qz 入队等待回写。'],output:[`CopyOut：将 qz 槽 ${slot} 的 ${elements} 个 Z 元素写回 GM 偏移 ${offset}。`,'回写后释放 qz 槽，下一 tile 可复用。'],download:['D2H：验证脚本将 GM 中的 Z 读回主机 DRAM，与 CPU 参考结果比较。','对应 verify_add_pipeline.py 的 out.cpu()；它不是 Add 内核的一部分。']};
+$('status').textContent=`第 ${step+1}/${last+1} 步 · ${messages[kind][0]}`;$('details').textContent=messages[kind][1];$('prev').disabled=step===0;$('next').disabled=step===last;
 }
-controls.length.addEventListener('change',rebuild);controls.cores.addEventListener('change',rebuild);controls.core.addEventListener('change',()=>{stop();step=0;render()});$('prev').addEventListener('click',()=>{stop();step=Math.max(0,step-1);render()});$('next').addEventListener('click',()=>{step++;render();if($('next').disabled)stop()});$('play').addEventListener('click',()=>{if(timer){stop();return}if($('next').disabled)step=0;render();$('play').textContent='暂停';timer=setInterval(()=>{step++;render();if($('next').disabled)stop()},850)});rebuild();
+control.length.addEventListener('change',rebuild);control.cores.addEventListener('change',rebuild);control.core.addEventListener('change',()=>{stop();step=0;render()});$('prev').addEventListener('click',()=>{stop();step--;render()});$('next').addEventListener('click',()=>{step++;render();if($('next').disabled)stop()});$('play').addEventListener('click',()=>{if(timer){stop();return}if($('next').disabled)step=0;render();$('play').textContent='暂停';timer=setInterval(()=>{step++;render();if($('next').disabled)stop()},1000)});rebuild();
 })();
 </script>
 </body>
