@@ -3,39 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ascend Add Pipeline：构建、代码与四核数据流</title>
+<title>Ascend Add Pipeline：代码与四核数据流</title>
 <style>
 :root{color-scheme:light dark;--bg:#f5f7fb;--panel:#fff;--ink:#172135;--muted:#526079;--line:#ccd5e2;--host:#e9eff8;--device:#edf7f3;--core:#f5eefb;--storage:#e7f1fb;--vector:#f7ecfa;--active:#176db5;--done:#168065;--inactive:#e8ebf0}
 @media(prefers-color-scheme:dark){:root{--bg:#121824;--panel:#1d2634;--ink:#edf2fb;--muted:#b8c4d8;--line:#45536a;--host:#25364c;--device:#203d35;--core:#392d45;--storage:#263c55;--vector:#463251;--active:#83c7ff;--done:#75d8b3;--inactive:#293341}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}main{max-width:1230px;margin:auto;padding:28px 18px 48px}h1{font-size:1.65rem;margin:0 0 6px}h2{font-size:1.05rem;margin:0 0 12px}p{margin:0 0 16px;color:var(--muted)}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.controls{display:flex;align-items:end;flex-wrap:wrap;gap:10px;margin:20px 0}.control{display:grid;gap:4px;font-size:.9rem}.control select,button{font:inherit;padding:8px 11px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}button{min-width:78px}button:hover:not(:disabled){background:var(--storage)}button:focus-visible,select:focus-visible{outline:2px solid var(--active);outline-offset:2px}button:disabled{opacity:.5}.panel{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:18px;margin:14px 0}.boundary{border:1px solid var(--line);border-radius:12px;padding:14px}.host{background:var(--host)}.device{background:var(--device)}.boundary-title{font-weight:500;margin-bottom:8px}.transfer{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.chip{display:inline-block;border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:7px 10px;min-width:102px;text-align:center;font-size:.9rem}.chip.storage{background:var(--storage)}.chip.vector{background:var(--vector)}.arrow{color:var(--muted);font-size:1.2rem;font-weight:500;white-space:nowrap}.arrow.active{color:var(--active);animation:pulse .7s ease-in-out infinite alternate}.arrow.done{color:var(--done)}@keyframes pulse{to{opacity:.4}}@media(prefers-reduced-motion:reduce){.arrow.active{animation:none}}.bridge{display:flex;gap:15px;align-items:center;flex-wrap:wrap;padding:10px 14px}.bridge .arrow{font-size:.95rem}.bridge small,.muted{font-size:.88rem;color:var(--muted)}.core-list{display:grid;gap:10px;margin-top:12px}.core-lane{display:grid;grid-template-columns:110px minmax(770px,1fr);align-items:center;gap:10px}.core-meta{font-weight:500}.core-meta small{display:block;color:var(--muted);font-weight:400}.core-route{display:grid;grid-template-columns:90px 70px minmax(430px,1fr) 70px 90px;align-items:center;gap:5px}.core-inside{display:flex;align-items:center;justify-content:space-around;gap:6px;border:1px solid var(--line);border-radius:9px;background:var(--core);padding:8px}.core-inside .chip{min-width:92px}.core-inside .arrow{font-size:.9rem}.core-route>.arrow{font-size:.85rem;text-align:center}.core-lane.idle{opacity:.55}.core-lane.idle .core-inside{background:var(--inactive)}.scroller{overflow-x:auto}.scroller-inner{min-width:1000px}.status{font-weight:500;min-height:28px}.details{font-size:.9rem;color:var(--muted)}.legend{display:flex;gap:15px;flex-wrap:wrap;font-size:.82rem;color:var(--muted);margin-top:10px}.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:middle}.legend .host{background:var(--host)}.legend .device{background:var(--device)}.legend .core{background:var(--core)}@media(max-width:680px){.panel{padding:13px}.controls{align-items:stretch}}
-.lifecycle-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:14px 0}.lifecycle-group{border:1px solid var(--line);border-radius:11px;padding:12px;min-width:0;position:relative}.lifecycle-group:not(:last-child)::after{content:'→';position:absolute;right:-18px;top:48%;z-index:1;color:var(--muted);font-weight:500}.load-step{border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:9px 10px;margin:8px 0;min-height:70px}.load-step strong,.load-step small{display:block}.load-step strong{font-weight:500}.load-step small{font-size:.82rem;color:var(--muted);overflow-wrap:anywhere}.load-step.active{border:2px solid var(--active);background:var(--storage)}.load-step.done{border-color:var(--done)}.load-step.active small{color:var(--ink)}@media(max-width:760px){.lifecycle-grid{grid-template-columns:1fr}.lifecycle-group:not(:last-child)::after{content:'↓';right:50%;top:auto;bottom:-21px}}
 .flow-wrap{overflow-x:auto}.flow-diagram{display:block;width:100%;min-width:1030px;height:auto;margin:12px 0}.flow-diagram .lane{fill:var(--host);stroke:var(--line);stroke-width:1}.flow-diagram .lane.npu-code{fill:var(--core)}.flow-diagram .lane.hardware{fill:var(--device)}.flow-diagram .lane-title{fill:var(--ink);font:500 16px system-ui,sans-serif}.flow-diagram .lane-subtitle{fill:var(--muted);font:400 12px system-ui,sans-serif}.flow-node rect{fill:var(--panel);stroke:var(--line);stroke-width:1.5}.flow-node text{fill:var(--ink);font:500 14px system-ui,sans-serif}.flow-node .subline{fill:var(--muted);font:400 12px system-ui,sans-serif}.flow-node.active rect{stroke:var(--active);stroke-width:3;fill:var(--storage)}.flow-edge{fill:none;stroke-width:2.5}.flow-edge.control{stroke:var(--active);stroke-dasharray:7 6;marker-end:url(#control-arrow)}.flow-edge.data{stroke:var(--done);marker-end:url(#data-arrow)}.flow-edge.active{stroke-width:4;animation:flow-dash .7s linear infinite}.flow-label{fill:var(--ink);font:500 12px system-ui,sans-serif;paint-order:stroke;stroke:var(--panel);stroke-width:4}.flow-label.control{fill:var(--active)}.flow-label.data{fill:var(--done)}@keyframes flow-dash{to{stroke-dashoffset:-13}}@media(prefers-reduced-motion:reduce){.flow-edge.active{animation:none}}.flow-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.85rem;color:var(--muted)}.flow-legend b{font-weight:500}.flow-legend .control{color:var(--active)}.flow-legend .data{color:var(--done)}.flow-controls{margin:8px 0}.flow-status{min-height:40px;font-size:.9rem;color:var(--ink)}.analysis-note{border-left:3px solid var(--active);padding:7px 10px;background:var(--storage);font-size:.9rem;margin:12px 0}.api-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.api-item{border:1px solid var(--line);border-radius:8px;padding:10px;min-width:0}.api-item strong{display:block;font-weight:500;overflow-wrap:anywhere}.api-item span{display:block;color:var(--muted);font-size:.88rem;margin-top:3px}.analysis-subtitle{font-weight:500;margin:15px 0 8px}@media(max-width:700px){.api-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <main>
-<h1>Add Pipeline：构建、代码与四核数据流</h1>
-<p>先看 CMake 如何生成扩展、Linux 如何将它加载到 Python 进程，再看运行时如何向 NPU 发起内核计算。固定展示 Core 0–3；没有分到 tile 的核心显示“未启动”。</p>
-<section class="panel" aria-labelledby="lifecycle-title">
-<h2 id="lifecycle-title">构建产物 → OS 加载 → NPU 执行</h2>
-<div class="controls"><button id="build-prev" type="button">上一步</button><button id="build-next" type="button">下一步</button><button id="build-play" type="button">自动播放</button></div>
-<div class="lifecycle-grid">
-<div class="lifecycle-group host"><div class="boundary-title">① 构建阶段 · 容器 Linux 文件系统</div>
-<div class="load-step" data-build-step="0"><strong>源代码</strong><small><code>add_pipeline.cpp</code>（内核 + 注册）<br><code>extension.cpp</code>（Python 入口）</small></div>
-<div class="load-step" data-build-step="1"><strong>CMake + Bisheng</strong><small><code>add_pipeline_obj</code> 对象文件；<code>extension.cpp</code> 对象文件</small></div>
-<div class="load-step" data-build-step="2"><strong>链接产物</strong><small><code>build/_C.so</code>，链接 torch、torch_npu 与 CANN 库</small></div>
-<div class="load-step" data-build-step="3"><strong>复制到 Python 包</strong><small><code>ascend_add_pipeline/_C.so</code></small></div></div>
-<div class="lifecycle-group host"><div class="boundary-title">② 加载阶段 · 容器 OS / Python 进程</div>
-<div class="load-step" data-build-step="4"><strong>Python import</strong><small><code>import ascend_add_pipeline</code> → 导入 <code>._C</code></small></div>
-<div class="load-step" data-build-step="5"><strong>Linux 动态加载器</strong><small>映射 <code>_C.so</code> 与依赖库；静态初始化执行 <code>TORCH_LIBRARY</code> 注册，随后 Python 调用 <code>PyInit__C</code></small></div>
-<div class="load-step" data-build-step="6"><strong>PyTorch 算子分派</strong><small><code>torch.ops.ascend_add_pipeline.add_pipeline</code> 对 NPU 张量分派到 <code>AddNpu</code></small></div></div>
-<div class="lifecycle-group device"><div class="boundary-title">③ 执行阶段 · NPU 设备</div>
-<div class="load-step" data-build-step="7"><strong>宿主侧发射</strong><small><code>AddNpu</code> 取当前 NPU stream，经 torch-npu/CANN 路径发射内核</small></div>
-<div class="load-step" data-build-step="8"><strong>NPU 执行</strong><small>AI Core 读取 GM，使用 UB 队列与向量单元，写回 GM</small></div></div>
-</div>
-<div id="build-status" class="status" role="status" aria-live="polite"></div>
-<div class="details">关键边界：<code>_C.so</code> 是由 OS 加载到 Python 进程的共享库；NPU 不直接加载该 Linux 文件。运行时的内核发射才进入设备执行路径。</div>
-</section>
+<h1>Add Pipeline：代码与四核数据流</h1>
+<p>沿 Python、CPU C++、NPU 内核和硬件设备四条通道，查看算子调用与张量数据的运行路径。下方固定展示 Core 0–3；没有分到 tile 的核心显示“未启动”。</p>
 <section class="panel" id="code-analysis" aria-labelledby="analysis-title">
 <h2 id="analysis-title">代码分析：四条通道的执行流程</h2>
 <p>按一次非空 NPU 张量调用的时间顺序，自上而下沿箭头阅读四条通道。蓝色虚线是控制命令与参数，绿色实线是张量元素；运行代码与硬件存储各自占一条通道。</p>
@@ -204,24 +183,6 @@ const message={upload:['H2D：验证脚本把 X/Y 从主机 DRAM 复制到 NPU G
 $('status').textContent=`第 ${step+1}/${m.last+1} 步 · ${message[phase][0]}`;$('details').textContent=message[phase][1];$('prev').disabled=step===0;$('next').disabled=step===m.last;
 }
 $('length').addEventListener('change',()=>{stop();step=0;render()});$('prev').addEventListener('click',()=>{stop();step--;render()});$('next').addEventListener('click',()=>{step++;render();if($('next').disabled)stop()});$('play').addEventListener('click',()=>{if(timer){stop();return}if($('next').disabled)step=0;render();$('play').textContent='暂停';timer=setInterval(()=>{step++;render();if($('next').disabled)stop()},1100)});render();
-})();
-(()=>{
-const $=id=>document.getElementById(id),nodes=[...document.querySelectorAll('[data-build-step]')];
-const descriptions=[
-  '源代码包含 Ascend C 内核、PyTorch 注册代码和 Python 扩展入口。',
-  'CMake 调用 Bisheng 编译 add_pipeline.cpp，生成 add_pipeline_obj；extension.cpp 也编译为对象文件。',
-  '链接器把对象文件与依赖库连接成 build/_C.so。它是 Linux 共享库，不是一个独立可执行程序。',
-  'CMake 的 POST_BUILD 将 _C.so 复制进 ascend_add_pipeline 包目录，供 Python 导入。',
-  'Python 导入包时，__init__.py 继续导入 _C 扩展模块。',
-  'OS 动态加载器把共享库映射到 Python 进程并解析依赖；静态初始化完成 TORCH_LIBRARY 注册，随后 Python 调用 PyInit__C。',
-  'torch.ops 中的算子已经可见；PyTorch 将 NPU 张量调用分派到 AddNpu。',
-  'AddNpu 在主机进程中计算分块数，取得当前 NPU stream，并通过 torch-npu/CANN 路径发射内核。',
-  'NPU 的 AI Core 执行 CopyIn → Compute → CopyOut；结果留在设备 GM，验证脚本随后读回。'
-];
-let step=0,timer=null;
-function stop(){if(timer){clearInterval(timer);timer=null}$('build-play').textContent='自动播放'}
-function render(){nodes.forEach((node,i)=>{node.classList.toggle('active',i===step);node.classList.toggle('done',i<step)});$('build-status').textContent=`第 ${step+1}/${nodes.length} 步 · ${descriptions[step]}`;$('build-prev').disabled=step===0;$('build-next').disabled=step===nodes.length-1}
-$('build-prev').addEventListener('click',()=>{stop();step--;render()});$('build-next').addEventListener('click',()=>{step++;render();if($('build-next').disabled)stop()});$('build-play').addEventListener('click',()=>{if(timer){stop();return}if($('build-next').disabled)step=0;render();$('build-play').textContent='暂停';timer=setInterval(()=>{step++;render();if($('build-next').disabled)stop()},1300)});render();
 })();
 (()=>{
 const $=id=>document.getElementById(id);
