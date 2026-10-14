@@ -4,7 +4,7 @@ services:
     image: ascend-dev:9.1.0-950-2.10.0
     pull_policy: never
     container_name: ascend-add-pipeline
-    working_dir: /workspace/ascend-add-pipeline/examples/add_pipeline
+    working_dir: /workspace/ascend-dev/examples/add_pipeline
     command: ["sleep", "infinity"]
     devices:
       # 设备节点和驱动库来自宿主机；按实际驱动安装情况调整。
@@ -30,5 +30,5 @@ services:
         target: /etc/ascend_install.info
         read_only: true
       - type: bind
-        source: ${PROJECT_ROOT:?set PROJECT_ROOT to the absolute ascend-add-pipeline path}
-        target: /workspace/ascend-add-pipeline
+        source: ${PROJECT_ROOT:?set PROJECT_ROOT to the absolute ascend-dev path}
+        target: /workspace/ascend-dev

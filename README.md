@@ -1,6 +1,11 @@
-# Ascend 950 流水式矢量加法实验
+# Ascend 算子开发实践
 
-本仓库从[实验 Gist](https://gist.github.com/Faione/fc06cfce0900e135ffddadd33b71d51f)提取环境脚本和 Add 代码，并将 Add 做成独立示例。示例参考 [ops-transformer](https://gitcode.com/Ascend/ops-transformer) 的 Fast Kernel Launch 写法，但构建时不克隆或链接该仓库，也不需要 `opbase`、`ascend-build-deps`。本机尚未接入 Ascend 设备；下列编译和 NPU 结果需在 950 服务器验证。
+本仓库收录不同的 AscendC 算子开发实践：
+
+- [Add Pipeline 示例](examples/add_pipeline/)：包含代码、构建与验证脚本，以下环境说明服务于这个示例。
+- [Sinh 算子设计实验报告](docs/sinh-operator-experiment.md)：记录 `8 × 2048` 的 `half` 输入上的分块、搬运、三地址码、缓冲区与优化思考。算子已通过真机测试，报告尚未收录测试命令和量化数据。
+
+Add 示例从[实验 Gist](https://gist.github.com/Faione/fc06cfce0900e135ffddadd33b71d51f)提取环境脚本和代码，并将 Add 做成独立示例。示例参考 [ops-transformer](https://gitcode.com/Ascend/ops-transformer) 的 Fast Kernel Launch 写法，但构建时不克隆或链接该仓库，也不需要 `opbase`、`ascend-build-deps`。本机尚未接入 Ascend 设备；下列编译和 NPU 结果需在 950 服务器验证。
 
 ## 一、环境准备
 
