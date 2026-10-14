@@ -62,8 +62,6 @@ python3 verify_add_pipeline.py --device 0
 
 编译使用 CANN 的 Bisheng、PyTorch 和 torch-npu。`CMakeLists.txt` 直接编译本目录的 `csrc/add_pipeline.cpp`，目标架构是 950 的 `dav-3510`；无需执行 `ops-transformer/build.sh`。`verify_add_pipeline.py` 以表格显示 NPU 可用性、不同长度的 Add 结果、输入检查和最终结果；期望各行 `PASS`，数值误差在 `torch.testing.assert_close` 阈值内。内核采用双缓冲 `TPipe/TQue`，每轮依次 CopyIn、Compute、CopyOut，支持非整 tile 长度。
 
-一次普通 NPU 调用的函数顺序如下。导入 `ascend_add_pipeline` 时，`_C.so` 的静态注册先让 PyTorch 认识 `add_pipeline`；调用 `torch.ops.ascend_add_pipeline.add_pipeline(x, y)` 后，`PrivateUse1` 分派到 `AddNpu`。`AddNpu` 先执行 `CheckInputs`、分配输出、查询设备资源并计算 block 分配，再通过 `RunOpApi` 中的 lambda 发射 `add_pipeline_kernel`。各 block 在设备上独立运行 `KernelAdd::Init` 和 `KernelAdd::Process`；`Process` 对分到的每个 tile 依次调用 `CopyIn`、`Compute`、`CopyOut`。空向量在 `AddNpu` 中直接返回；Meta 张量走 `AddMeta`，不会启动设备内核。返回输出张量不表示设备工作已完成，验证脚本在读取前执行同步。
-
 可在线打开 [Add Pipeline 动态示意](https://faione.github.io/ascend_dev/)（[页面源码](docs/add-pipeline.html)）。上半部分展示 CMake 对象文件与 `_C.so` 的生成、Linux/Python 对共享库的加载、PyTorch 注册及 NPU 发射路径；`_C.so` 加载到 OS 进程，NPU 执行的是随后发射的内核。下半部分可切换向量长度，同时查看 4 个 AI Core 的 tile 分配和数据流；未分到 tile 的核心显示“未启动”。页面区分验证脚本的 H2D/D2H 与内核的 CopyIn/Compute/CopyOut，是代码流程说明，不代表真实硬件的执行时序或性能数据。
 
 如果 CMake 找不到 `ASC`/`AICPU` 或 Bisheng，先在容器中检查 `ASCEND_HOME_PATH` 与 `/usr/local/Ascend/cann/set_env.sh`。若 `opdev/bfloat16.h` 缺失，检查 CANN Toolkit 安装和头文件路径；本示例未依赖 `ops-transformer` 的 `opbase`。如 `torch.npu.is_available()` 为 false，优先核对宿主机驱动、Compose 设备映射和驱动库路径。
