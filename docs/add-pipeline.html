@@ -9,7 +9,7 @@
 @media(prefers-color-scheme:dark){:root{--bg:#121824;--panel:#1d2634;--ink:#edf2fb;--muted:#b8c4d8;--line:#45536a;--host:#25364c;--device:#203d35;--core:#392d45;--storage:#263c55;--vector:#463251;--active:#83c7ff;--done:#75d8b3;--inactive:#293341}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}main{max-width:1230px;margin:auto;padding:28px 18px 48px}h1{font-size:1.65rem;margin:0 0 6px}h2{font-size:1.05rem;margin:0 0 12px}p{margin:0 0 16px;color:var(--muted)}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.controls{display:flex;align-items:end;flex-wrap:wrap;gap:10px;margin:20px 0}.control{display:grid;gap:4px;font-size:.9rem}.control select,button{font:inherit;padding:8px 11px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}button{min-width:78px}button:hover:not(:disabled){background:var(--storage)}button:focus-visible,select:focus-visible{outline:2px solid var(--active);outline-offset:2px}button:disabled{opacity:.5}.panel{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:18px;margin:14px 0}.boundary{border:1px solid var(--line);border-radius:12px;padding:14px}.host{background:var(--host)}.device{background:var(--device)}.boundary-title{font-weight:500;margin-bottom:8px}.transfer{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.chip{display:inline-block;border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:7px 10px;min-width:102px;text-align:center;font-size:.9rem}.chip.storage{background:var(--storage)}.chip.vector{background:var(--vector)}.arrow{color:var(--muted);font-size:1.2rem;font-weight:500;white-space:nowrap}.arrow.active{color:var(--active);animation:pulse .7s ease-in-out infinite alternate}.arrow.done{color:var(--done)}@keyframes pulse{to{opacity:.4}}@media(prefers-reduced-motion:reduce){.arrow.active{animation:none}}.bridge{display:flex;gap:15px;align-items:center;flex-wrap:wrap;padding:10px 14px}.bridge .arrow{font-size:.95rem}.bridge small,.muted{font-size:.88rem;color:var(--muted)}.core-list{display:grid;gap:10px;margin-top:12px}.core-lane{display:grid;grid-template-columns:110px minmax(770px,1fr);align-items:center;gap:10px}.core-meta{font-weight:500}.core-meta small{display:block;color:var(--muted);font-weight:400}.core-route{display:grid;grid-template-columns:90px 70px minmax(430px,1fr) 70px 90px;align-items:center;gap:5px}.core-inside{display:flex;align-items:center;justify-content:space-around;gap:6px;border:1px solid var(--line);border-radius:9px;background:var(--core);padding:8px}.core-inside .chip{min-width:92px}.core-inside .arrow{font-size:.9rem}.core-route>.arrow{font-size:.85rem;text-align:center}.core-lane.idle{opacity:.55}.core-lane.idle .core-inside{background:var(--inactive)}.scroller{overflow-x:auto}.scroller-inner{min-width:1000px}.status{font-weight:500;min-height:28px}.details{font-size:.9rem;color:var(--muted)}.legend{display:flex;gap:15px;flex-wrap:wrap;font-size:.82rem;color:var(--muted);margin-top:10px}.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:middle}.legend .host{background:var(--host)}.legend .device{background:var(--device)}.legend .core{background:var(--core)}@media(max-width:680px){.panel{padding:13px}.controls{align-items:stretch}}
 .lifecycle-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:14px 0}.lifecycle-group{border:1px solid var(--line);border-radius:11px;padding:12px;min-width:0;position:relative}.lifecycle-group:not(:last-child)::after{content:'→';position:absolute;right:-18px;top:48%;z-index:1;color:var(--muted);font-weight:500}.load-step{border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:9px 10px;margin:8px 0;min-height:70px}.load-step strong,.load-step small{display:block}.load-step strong{font-weight:500}.load-step small{font-size:.82rem;color:var(--muted);overflow-wrap:anywhere}.load-step.active{border:2px solid var(--active);background:var(--storage)}.load-step.done{border-color:var(--done)}.load-step.active small{color:var(--ink)}@media(max-width:760px){.lifecycle-grid{grid-template-columns:1fr}.lifecycle-group:not(:last-child)::after{content:'↓';right:50%;top:auto;bottom:-21px}}
-.execution-map-wrap{overflow-x:auto}.execution-map{min-width:890px;display:grid;gap:7px;margin:12px 0}.map-head,.map-row{display:grid;grid-template-columns:110px minmax(210px,1fr) minmax(235px,1fr) minmax(230px,1fr);gap:8px;align-items:stretch}.map-head{color:var(--muted);font-size:.82rem;font-weight:500;padding:0 8px}.map-row{position:relative;margin-bottom:15px}.map-row:not(:last-child)::after{content:'↓ 下一阶段';position:absolute;bottom:-17px;left:10px;color:var(--muted);font-size:.72rem}.map-phase,.map-node,.map-transfer{border:1px solid var(--line);border-radius:8px;padding:9px 10px;background:var(--panel);min-width:0}.map-phase{font-weight:500;background:var(--storage)}.map-phase small,.map-node small,.map-transfer small{display:block;font-size:.81rem;color:var(--muted);font-weight:400;overflow-wrap:anywhere;margin-top:3px}.map-node strong,.map-transfer strong{font-weight:500}.map-node.device-node{background:var(--device)}.map-transfer{border-style:dashed;background:var(--host)}.map-transfer.control{border-color:var(--active)}.map-transfer.data{border-style:solid;border-color:var(--done);background:var(--device)}.map-transfer.quiet{opacity:.7}.flow-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.85rem;color:var(--muted)}.flow-legend b{font-weight:500}.flow-legend .control{color:var(--active)}.flow-legend .data{color:var(--done)}.analysis-note{border-left:3px solid var(--active);padding:7px 10px;background:var(--storage);font-size:.9rem;margin:12px 0}.api-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.api-item{border:1px solid var(--line);border-radius:8px;padding:10px;min-width:0}.api-item strong{display:block;font-weight:500;overflow-wrap:anywhere}.api-item span{display:block;color:var(--muted);font-size:.88rem;margin-top:3px}.analysis-subtitle{font-weight:500;margin:15px 0 8px}@media(max-width:700px){.api-grid{grid-template-columns:1fr}}
+.flow-wrap{overflow-x:auto}.flow-diagram{display:block;width:100%;min-width:1030px;height:auto;margin:12px 0}.flow-diagram .lane{fill:var(--host);stroke:var(--line);stroke-width:1}.flow-diagram .lane.npu-code{fill:var(--core)}.flow-diagram .lane.hardware{fill:var(--device)}.flow-diagram .lane-title{fill:var(--ink);font:500 16px system-ui,sans-serif}.flow-diagram .lane-subtitle{fill:var(--muted);font:400 12px system-ui,sans-serif}.flow-node rect{fill:var(--panel);stroke:var(--line);stroke-width:1.5}.flow-node text{fill:var(--ink);font:500 14px system-ui,sans-serif}.flow-node .subline{fill:var(--muted);font:400 12px system-ui,sans-serif}.flow-node.active rect{stroke:var(--active);stroke-width:3;fill:var(--storage)}.flow-edge{fill:none;stroke-width:2.5}.flow-edge.control{stroke:var(--active);stroke-dasharray:7 6;marker-end:url(#control-arrow)}.flow-edge.data{stroke:var(--done);marker-end:url(#data-arrow)}.flow-edge.active{stroke-width:4;animation:flow-dash .7s linear infinite}.flow-label{fill:var(--ink);font:500 12px system-ui,sans-serif;paint-order:stroke;stroke:var(--panel);stroke-width:4}.flow-label.control{fill:var(--active)}.flow-label.data{fill:var(--done)}@keyframes flow-dash{to{stroke-dashoffset:-13}}@media(prefers-reduced-motion:reduce){.flow-edge.active{animation:none}}.flow-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.85rem;color:var(--muted)}.flow-legend b{font-weight:500}.flow-legend .control{color:var(--active)}.flow-legend .data{color:var(--done)}.flow-controls{margin:8px 0}.flow-status{min-height:40px;font-size:.9rem;color:var(--ink)}.analysis-note{border-left:3px solid var(--active);padding:7px 10px;background:var(--storage);font-size:.9rem;margin:12px 0}.api-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.api-item{border:1px solid var(--line);border-radius:8px;padding:10px;min-width:0}.api-item strong{display:block;font-weight:500;overflow-wrap:anywhere}.api-item span{display:block;color:var(--muted);font-size:.88rem;margin-top:3px}.analysis-subtitle{font-weight:500;margin:15px 0 8px}@media(max-width:700px){.api-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -37,20 +37,126 @@
 <div class="details">关键边界：<code>_C.so</code> 是由 OS 加载到 Python 进程的共享库；NPU 不直接加载该 Linux 文件。运行时的内核发射才进入设备执行路径。</div>
 </section>
 <section class="panel" id="code-analysis" aria-labelledby="analysis-title">
-<h2 id="analysis-title">代码分析：分阶段执行流程</h2>
-<p>按一次非空 NPU 张量调用的时间顺序阅读。横向区分宿主进程、跨硬件边界的通路和 NPU；纵向是函数调用阶段。控制通路传递命令与参数，数据通路搬运张量元素。</p>
+<h2 id="analysis-title">代码分析：四条通道的执行流程</h2>
+<p>按一次非空 NPU 张量调用的时间顺序，自上而下沿箭头阅读四条通道。蓝色虚线是控制命令与参数，绿色实线是张量元素；运行代码与硬件存储各自占一条通道。</p>
 <div class="flow-legend"><span><b class="control">⇢ 控制流（虚线）</b>：地址、核数、stream、启动/同步命令</span><span><b class="data">→ 数据流（实线）</b>：X/Y/Z 的实际元素</span></div>
-<div class="execution-map-wrap"><div class="execution-map" role="group" aria-label="Add 算子函数执行与控制数据流图">
-<div class="map-head"><span>执行时机</span><span>容器 OS / Python 进程</span><span>交互通路</span><span>NPU 设备</span></div>
-<div class="map-row"><div class="map-phase">01 · 加载时<small>每次进程导入扩展时</small></div><div class="map-node"><strong><code>TORCH_LIBRARY_FRAGMENT / IMPL</code></strong><small><code>_C.so</code> 的静态注册建立 schema、Meta 与 PrivateUse1 实现。</small></div><div class="map-transfer quiet"><strong>无硬件交互</strong><small>此时只在进程内建立 PyTorch 分派表。</small></div><div class="map-node device-node"><strong>NPU 未执行 Add</strong><small>没有张量数据搬运。</small></div></div>
-<div class="map-row"><div class="map-phase">02 · 输入准备<small>验证脚本，算子调用前</small></div><div class="map-node"><strong><code>x_cpu.to(device)</code>、<code>y_cpu.to(device)</code></strong><small>CPU 张量仍用于构造参考结果，另创建 NPU 输入张量。</small></div><div class="map-transfer data"><strong>→ H2D 数据搬运</strong><small>X/Y 的实际元素从主机 DRAM 复制到 NPU GM；不属于 Add 内核。</small></div><div class="map-node device-node"><strong>X/Y · GM</strong><small>设备输入张量已就绪。</small></div></div>
-<div class="map-row"><div class="map-phase">03 · 调用时<small>每次正常 NPU 调用</small></div><div class="map-node"><strong><code>torch.ops</code> → <code>AddNpu</code> → <code>CheckInputs</code></strong><small>按 PrivateUse1 选实现；检查形状、dtype、设备、连续性和梯度条件。</small></div><div class="map-transfer quiet"><strong>无张量数据搬运</strong><small><code>TORCH_CHECK</code> 检查张量元数据；CPU 不做逐元素加法。</small></div><div class="map-node device-node"><strong>X/Y 已是 NPU 张量</strong><small>其元素留在 GM，不因参数检查读回主机。</small></div></div>
-<div class="map-row"><div class="map-phase">04 · 准备时<small>发射前</small></div><div class="map-node"><strong><code>OptionalDeviceGuard</code>、<code>empty_like</code></strong><small>选择输入设备、分配 Z；查询平台信息，计算 tiles、tilesPerCore、blocks。</small></div><div class="map-transfer control"><strong>⇢ 平台信息/内存管理 API</strong><small><code>PlatformAscendCManager</code> 获取 AIV 数量、UB 容量；runtime 为 Z 准备设备内存。平台信息可能来自缓存，不等于每次直连硬件查询。</small></div><div class="map-node device-node"><strong>设备能力与 GM 输出区</strong><small>返回容量信息；Z 在 GM 中有可写空间，X/Y 元素不在此步参与计算。</small></div></div>
-<div class="map-row"><div class="map-phase">05 · 发射时<small>宿主侧提交命令</small></div><div class="map-node"><strong><code>RunOpApi</code> → lambda</strong><small><code>data_ptr</code> 取得设备地址；选择当前 NPU stream；发射 <code>add_pipeline_kernel</code>。</small></div><div class="map-transfer control"><strong>⇢ 内核启动命令</strong><small>经 torch-npu/CANN 路径提交 stream、block 数、GM 地址及 n/tilesPerCore。这里传的是地址和标量参数，不是 X/Y 元素本身。</small></div><div class="map-node device-node"><strong>NPU stream 接收工作</strong><small>设备按命令安排 block；宿主函数可先返回 Z 张量句柄。</small></div></div>
-<div class="map-row"><div class="map-phase">06 · 设备执行<small>各 block 独立运行</small></div><div class="map-node"><strong><code>AddNpu</code> 已提交</strong><small>CPU 不进入 <code>CopyIn/Compute/CopyOut</code> 逐元素循环。</small></div><div class="map-transfer data"><strong>→ NPU 内部数据流</strong><small>X/Y GM → qx/qy UB → 向量 Add → qz UB → Z GM；这条路径不跨主机边界，尾 tile 只搬运实际 count。</small></div><div class="map-node device-node"><strong><code>add_pipeline_kernel</code> → <code>Init</code> → <code>Process</code></strong><small><code>GetBlockIdx</code> 定区间；<code>TPipe/TQue</code> 管理 UB；每 tile 调用 CopyIn → Compute → CopyOut。</small></div></div>
-<div class="map-row"><div class="map-phase">07 · 同步时<small>调用方需要结果时</small></div><div class="map-node"><strong><code>torch.npu.synchronize()</code></strong><small>等待当前设备上的工作完成；这是验证脚本行为，不在 Add 内核中。</small></div><div class="map-transfer control"><strong>⇢ 同步控制 / ← 完成状态</strong><small>控制通路等待相关设备工作完成；不搬运 Z 的元素。</small></div><div class="map-node device-node"><strong>计算完成的 Z 位于 GM</strong><small>同步后可安全读取。</small></div></div>
-<div class="map-row"><div class="map-phase">08 · 读回时<small>仅验证脚本</small></div><div class="map-node"><strong><code>out.cpu()</code> → CPU 接收 Z</strong><small>得到主机副本，与 CPU 参考值比较。</small></div><div class="map-transfer data"><strong>← D2H 数据搬运</strong><small>Z 的实际元素从 NPU GM 复制到主机 DRAM；这与发射时传递 GM 地址不同。</small></div><div class="map-node device-node"><strong>Z · GM</strong><small>数据源留在设备全局内存。</small></div></div>
-</div></div>
+<div class="flow-controls controls"><button id="flow-prev" type="button">上一步</button><button id="flow-next" type="button">下一步</button><button id="flow-play" type="button">自动播放</button></div>
+<div class="flow-wrap"><svg class="flow-diagram" viewBox="0 0 1200 1200" role="img" aria-labelledby="flow-title flow-desc">
+<title id="flow-title">Python、CPU、NPU 代码与硬件设备四通道执行流程</title>
+<desc id="flow-desc">时间从上到下；蓝色虚线传递控制参数与命令，绿色实线搬运 X、Y、Z 元素。依次经过导入、H2D、分派、资源查询、内核发射、AI Core 执行、同步和 D2H。</desc>
+<defs><marker id="control-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="var(--active)"/></marker><marker id="data-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="var(--done)"/></marker></defs>
+<rect class="lane python" x="10" y="10" width="280" height="1175" rx="14"/>
+<text class="lane-title" x="26" y="40">Python 代码</text>
+<text class="lane-subtitle" x="26" y="60">调用 / 验证</text>
+<rect class="lane cpu" x="310" y="10" width="280" height="1175" rx="14"/>
+<text class="lane-title" x="326" y="40">CPU 代码</text>
+<text class="lane-subtitle" x="326" y="60">C++ 扩展 / runtime</text>
+<rect class="lane npu-code" x="610" y="10" width="280" height="1175" rx="14"/>
+<text class="lane-title" x="626" y="40">NPU 代码</text>
+<text class="lane-subtitle" x="626" y="60">AI Core 内核函数</text>
+<rect class="lane hardware" x="910" y="10" width="280" height="1175" rx="14"/>
+<text class="lane-title" x="926" y="40">硬件设备</text>
+<text class="lane-subtitle" x="926" y="60">GM / UB / Vector</text>
+<path class="flow-edge control" data-flow-step="0" d="M260 132 H330"/>
+<text class="flow-label control" x="295" y="117" text-anchor="middle">导入 / 静态注册</text>
+<path class="flow-edge control" data-flow-step="1" d="M260 252 H330"/>
+<text class="flow-label control" x="293" y="237" text-anchor="middle">调用</text>
+<path class="flow-edge data" data-flow-step="1" d="M260 273 V300 H900 V252 H930"/>
+<text class="flow-label data" x="690" y="294" text-anchor="middle">H2D · X/Y 元素</text>
+<path class="flow-edge control" data-flow-step="2" d="M260 372 H330"/>
+<text class="flow-label control" x="295" y="357" text-anchor="middle">PyTorch 分派</text>
+<path class="flow-edge control" data-flow-step="2" d="M445 406 V458"/>
+<text class="flow-label control" x="459" y="436" text-anchor="middle">调用</text>
+<path class="flow-edge control" data-flow-step="3" d="M560 486 H930"/>
+<text class="flow-label control" x="746" y="474" text-anchor="middle">资源查询 ⇢</text>
+<path class="flow-edge control" data-flow-step="3" d="M930 510 H560"/>
+<text class="flow-label control" x="746" y="527" text-anchor="middle">⇠ 能力信息</text>
+<path class="flow-edge control" data-flow-step="3" d="M445 526 V578"/>
+<text class="flow-label control" x="464" y="555" text-anchor="middle">分块完成</text>
+<path class="flow-edge control" data-flow-step="4" d="M560 612 H930"/>
+<text class="flow-label control" x="746" y="598" text-anchor="middle">内核命令：地址 / n / blocks / stream</text>
+<path class="flow-edge control" data-flow-step="4" d="M930 646 C885 670 862 710 840 730"/>
+<text class="flow-label control" x="886" y="682" text-anchor="middle">设备调度</text>
+<path class="flow-edge control" data-flow-step="5" d="M745 766 V818"/>
+<text class="flow-label control" x="760" y="796" text-anchor="middle">执行</text>
+<path class="flow-edge control" data-flow-step="5" d="M860 852 H930"/>
+<text class="flow-label control" x="895" y="838" text-anchor="middle">向量指令</text>
+<path class="flow-edge data" data-flow-step="5" d="M1165 252 H1182 V852 H1165"/>
+<text class="flow-label data" x="1070" y="682" text-anchor="middle">X/Y 留在 GM，内核按 tile 读取</text>
+<path class="flow-edge data" data-flow-step="5" d="M1045 886 V938"/>
+<text class="flow-label data" x="1056" y="916" text-anchor="middle">Z 写回 GM</text>
+<path class="flow-edge control" data-flow-step="6" d="M260 972 H330"/>
+<text class="flow-label control" x="294" y="957" text-anchor="middle">同步</text>
+<path class="flow-edge control" data-flow-step="6" d="M560 972 H930"/>
+<text class="flow-label control" x="745" y="957" text-anchor="middle">等待 stream / 完成状态</text>
+<path class="flow-edge data" data-flow-step="6" d="M1045 1006 V1058"/>
+<text class="flow-label data" x="1056" y="1037" text-anchor="middle">Z 保留在 GM</text>
+<path class="flow-edge control" data-flow-step="7" d="M260 1092 H330"/>
+<text class="flow-label control" x="293" y="1077" text-anchor="middle">调用</text>
+<path class="flow-edge data" data-flow-step="7" d="M930 1123 V1172 H145 V1126"/>
+<text class="flow-label data" x="600" y="1163" text-anchor="middle">D2H · Z 元素返回 CPU</text>
+<g class="flow-node" data-flow-step="0"><rect x="30" y="98" width="240" height="68" rx="9"/>
+<text x="42" y="125">import ascend_add_pipeline</text>
+<text class="subline" x="42" y="147">加载 Python 扩展</text></g>
+<g class="flow-node" data-flow-step="0"><rect x="330" y="98" width="240" height="68" rx="9"/>
+<text x="342" y="125">TORCH_LIBRARY_*</text>
+<text class="subline" x="342" y="147">注册 schema / 分派实现</text></g>
+<g class="flow-node" data-flow-step="1"><rect x="30" y="218" width="240" height="68" rx="9"/>
+<text x="42" y="245">x_cpu/y_cpu.to(device)</text>
+<text class="subline" x="42" y="267">准备 NPU 输入张量</text></g>
+<g class="flow-node" data-flow-step="1"><rect x="330" y="218" width="240" height="68" rx="9"/>
+<text x="342" y="245">torch-npu 拷贝调用</text>
+<text class="subline" x="342" y="267">安排 H2D</text></g>
+<g class="flow-node" data-flow-step="1"><rect x="930" y="218" width="240" height="68" rx="9"/>
+<text x="942" y="245">X/Y · GM</text>
+<text class="subline" x="942" y="267">输入元素位于设备</text></g>
+<g class="flow-node" data-flow-step="2"><rect x="30" y="338" width="240" height="68" rx="9"/>
+<text x="42" y="365">torch.ops.add_pipeline</text>
+<text class="subline" x="42" y="387">发起算子调用</text></g>
+<g class="flow-node" data-flow-step="2"><rect x="330" y="338" width="240" height="68" rx="9"/>
+<text x="342" y="365">AddNpu → CheckInputs</text>
+<text class="subline" x="342" y="387">校验输入元数据</text></g>
+<g class="flow-node" data-flow-step="3"><rect x="330" y="458" width="240" height="68" rx="9"/>
+<text x="342" y="485">empty_like / 分块</text>
+<text class="subline" x="342" y="507">准备 Z、tiles、blocks</text></g>
+<g class="flow-node" data-flow-step="3"><rect x="930" y="458" width="240" height="68" rx="9"/>
+<text x="942" y="485">AIV / UB 资源</text>
+<text class="subline" x="942" y="507">设备能力信息</text></g>
+<g class="flow-node" data-flow-step="4"><rect x="330" y="578" width="240" height="68" rx="9"/>
+<text x="342" y="605">RunOpApi → launch</text>
+<text class="subline" x="342" y="627">提交 GM 地址与标量</text></g>
+<g class="flow-node" data-flow-step="4"><rect x="930" y="578" width="240" height="68" rx="9"/>
+<text x="942" y="605">NPU 命令队列</text>
+<text class="subline" x="942" y="627">承接当前 stream 提交</text></g>
+<g class="flow-node" data-flow-step="5"><rect x="630" y="698" width="240" height="68" rx="9"/>
+<text x="642" y="725">add_pipeline_kernel</text>
+<text class="subline" x="642" y="747">GetBlockIdx 定区间</text></g>
+<g class="flow-node" data-flow-step="5"><rect x="630" y="818" width="240" height="68" rx="9"/>
+<text x="642" y="845">Init → Process</text>
+<text class="subline" x="642" y="867">逐 tile 调用三阶段</text></g>
+<g class="flow-node" data-flow-step="5"><rect x="930" y="818" width="240" height="68" rx="9"/>
+<text x="942" y="845">GM → UB → Vector → GM</text>
+<text class="subline" x="942" y="867">设备内部数据搬运与计算</text></g>
+<g class="flow-node" data-flow-step="6"><rect x="30" y="938" width="240" height="68" rx="9"/>
+<text x="42" y="965">torch.npu.synchronize</text>
+<text class="subline" x="42" y="987">等待结果</text></g>
+<g class="flow-node" data-flow-step="6"><rect x="330" y="938" width="240" height="68" rx="9"/>
+<text x="342" y="965">stream 同步调用</text>
+<text class="subline" x="342" y="987">等待设备完成</text></g>
+<g class="flow-node" data-flow-step="6"><rect x="930" y="938" width="240" height="68" rx="9"/>
+<text x="942" y="965">Z · GM</text>
+<text class="subline" x="942" y="987">计算结果就绪</text></g>
+<g class="flow-node" data-flow-step="7"><rect x="30" y="1058" width="240" height="68" rx="9"/>
+<text x="42" y="1085">out.cpu() / compare</text>
+<text class="subline" x="42" y="1107">读回并比较</text></g>
+<g class="flow-node" data-flow-step="7"><rect x="330" y="1058" width="240" height="68" rx="9"/>
+<text x="342" y="1085">D2H 拷贝调用</text>
+<text class="subline" x="342" y="1107">安排设备到主机拷贝</text></g>
+<g class="flow-node" data-flow-step="7"><rect x="930" y="1058" width="240" height="68" rx="9"/>
+<text x="942" y="1085">Z · GM</text>
+<text class="subline" x="942" y="1107">设备侧数据源</text></g>
+</svg></div><div id="flow-status" class="flow-status" role="status" aria-live="polite"></div>
+<div class="details">“NPU 代码”表示运行在 AI Core 上的内核函数；“硬件设备”表示承载命令和数据的 GM、UB 与向量计算单元。图中的 NPU stream 是软件提交与设备执行之间的队列抽象。</div>
 <div class="analysis-note">分支：长度为 0 时，<code>AddNpu</code> 分配输出后直接返回，不发射内核。Meta 张量会调用独立的 <code>AddMeta</code>，只推断输出属性，不执行 NPU 计算。</div>
 <div class="analysis-subtitle">函数内部常见 API</div>
 <div class="api-grid">
@@ -116,6 +222,24 @@ let step=0,timer=null;
 function stop(){if(timer){clearInterval(timer);timer=null}$('build-play').textContent='自动播放'}
 function render(){nodes.forEach((node,i)=>{node.classList.toggle('active',i===step);node.classList.toggle('done',i<step)});$('build-status').textContent=`第 ${step+1}/${nodes.length} 步 · ${descriptions[step]}`;$('build-prev').disabled=step===0;$('build-next').disabled=step===nodes.length-1}
 $('build-prev').addEventListener('click',()=>{stop();step--;render()});$('build-next').addEventListener('click',()=>{step++;render();if($('build-next').disabled)stop()});$('build-play').addEventListener('click',()=>{if(timer){stop();return}if($('build-next').disabled)step=0;render();$('build-play').textContent='暂停';timer=setInterval(()=>{step++;render();if($('build-next').disabled)stop()},1300)});render();
+})();
+(()=>{
+const $=id=>document.getElementById(id);
+const marks=[...document.querySelectorAll('.flow-diagram [data-flow-step]')];
+const phases=[
+  '模块加载：Python import 触发 _C.so 加载；CPU 侧静态注册完成，NPU 尚未执行。',
+  '输入准备：Python 调用 .to(device)；控制交给 torch-npu，X/Y 元素通过 H2D 进入设备 GM。',
+  '算子调用：Python torch.ops 进入 CPU 侧 AddNpu 和 CheckInputs；只检查元数据。',
+  '资源准备：CPU 分配输出并计算分块；通过平台 API 取得 AIV/UB 信息，结果可能来自缓存。',
+  '内核发射：CPU 将 GM 地址、长度、block 数和 stream 等控制参数提交到 NPU 命令队列。',
+  '设备执行：NPU 内核按 block 运行；硬件在 GM、UB 和向量单元之间搬运与计算 X/Y/Z。',
+  '同步：Python 发起等待，CPU runtime 通过控制通路获知设备工作完成；此时不搬运 Z 元素。',
+  '读回：out.cpu() 触发 D2H；Z 元素从设备 GM 复制到主机 DRAM，供 Python 比对。'
+];
+let step=0,timer=null;
+function stop(){if(timer){clearInterval(timer);timer=null}$('flow-play').textContent='自动播放'}
+function render(){marks.forEach(el=>el.classList.toggle('active',Number(el.dataset.flowStep)===step));$('flow-status').textContent=`阶段 ${step+1}/${phases.length} · ${phases[step]}`;$('flow-prev').disabled=step===0;$('flow-next').disabled=step===phases.length-1}
+$('flow-prev').addEventListener('click',()=>{stop();step--;render()});$('flow-next').addEventListener('click',()=>{step++;render();if($('flow-next').disabled)stop()});$('flow-play').addEventListener('click',()=>{if(timer){stop();return}if($('flow-next').disabled)step=0;render();$('flow-play').textContent='暂停';timer=setInterval(()=>{step++;render();if($('flow-next').disabled)stop()},1400)});render();
 })();
 </script>
 </body>
