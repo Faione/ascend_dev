@@ -10,7 +10,7 @@ RUN set -eux; \
     sed -Ei "s#https?://([a-z0-9.-]*archive.ubuntu.com|security.ubuntu.com)#${mirror}#g" /etc/apt/sources.list; \
     apt-get update; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-      python3 python3-pip python3-dev build-essential cmake git \
+      python3 python3-pip python3-dev build-essential cmake ninja-build git \
       libssl-dev zlib1g-dev libffi-dev ca-certificates; \
     rm -rf /var/lib/apt/lists/*; \
     python3 -m pip config --user set global.index "${mirror}/pypi/simple"; \

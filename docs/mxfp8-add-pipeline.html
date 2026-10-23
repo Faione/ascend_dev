@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MXFP8 Add Pipeline：量化与加法</title>
+<style>
+:root{font-family:system-ui,sans-serif;color:#172135;background:#f5f7fb}*{box-sizing:border-box}body{margin:0}main{max-width:1050px;margin:auto;padding:28px 18px}h1{margin:0}p{line-height:1.6;color:#526079}a{color:#176db5}.panel{background:#fff;border:1px solid #ccd5e2;border-radius:12px;padding:18px;margin:16px 0}.flow{display:flex;flex-wrap:wrap;gap:8px}.stage{flex:1 1 160px;border:1px solid #aebbd0;border-radius:9px;background:#edf4fb;padding:12px;min-height:115px}.stage.active{outline:3px solid #176db5;background:#dceeff}.stage strong,.stage small{display:block}.stage small{margin-top:8px;line-height:1.4;color:#526079}.controls{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0}.controls label{display:grid;gap:5px}.controls input,.controls button{font:inherit;padding:8px;border:1px solid #aebbd0;border-radius:7px}.controls input{width:180px}.controls button{cursor:pointer;background:#176db5;color:white}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.cell{background:#f5f7fb;border-radius:8px;padding:10px;overflow-wrap:anywhere}.cell b{display:block}code,pre{font-family:ui-monospace,Consolas,monospace}pre{overflow:auto;background:#172135;color:white;padding:15px;border-radius:9px;line-height:1.5}.note{border-left:4px solid #168065;padding:8px 12px;background:#edf7f3}@media(max-width:650px){.grid{grid-template-columns:1fr}}
+</style></head><body><main>
+<h1>MXFP8 Add Pipeline</h1>
+<p>沿用 <a href="add-pipeline.html">原始 Add Pipeline</a> 的 GM → UB → Add → GM 内核，在调用它之前加入逐组量化与反量化。量化由 PyTorch 张量操作执行；原始 AI Core Add 内核仍计算 FP32。</p>
+<section class="panel"><h2>一组 32 个元素怎样流动</h2>
+<div class="flow">
+<div class="stage"><strong>① FP32 输入</strong><small>x、y 各是一维连续张量</small></div>
+<div class="stage"><strong>② 逐组求 scale</strong><small>每 32 个元素取最大绝对值，求 2 的幂并编码为 E8M0</small></div>
+<div class="stage"><strong>③ 量化为 E4M3FN</strong><small>值除以各组 scale，再舍入为 FP8</small></div>
+<div class="stage"><strong>④ 反量化</strong><small>FP8 值乘回对应 scale，形成 FP32 输入</small></div>
+<div class="stage"><strong>⑤ Add Pipeline</strong><small>原始内核逐 tile 搬运、相加、回写 FP32</small></div>
+</div>
+<div class="controls"><label>32 元素组的最大绝对值<input id="amax" type="number" min="0" step="any" value="10"></label><label>组内示例值<input id="value" type="number" step="any" value="3.14"></label><button id="prev" type="button">上一步</button><button id="next" type="button">下一步</button></div>
+<p id="status" role="status" aria-live="polite"></p><div class="grid"><div class="cell"><b>E8M0 scale</b><span id="scale"></span></div><div class="cell"><b>量化与反量化</b><span id="numbers"></span></div></div>
+<p class="note">交互区只演示 scale 计算。JavaScript 不能精确模拟 E4M3FN 舍入；实际 FP8 转换由下方 Python 示例中的 torch.float8_e4m3fn 执行。</p></section>
+<section class="panel"><h2>对应代码</h2><pre><code># examples/add_pipeline/mxfp8_add_pipeline.py
+x8, sx = quantize_mxfp8(x)
+y8, sy = quantize_mxfp8(y)
+dx = dequantize_mxfp8(x8, sx)
+dy = dequantize_mxfp8(y8, sy)
+z = torch.ops.ascend_add_pipeline.add_pipeline(dx, dy)</code></pre>
+<p>CPU 演示：<code>python examples/add_pipeline/mxfp8_add_pipeline.py</code>。NPU 上导入 <code>ascend_add_pipeline</code> 后，将其算子传给 <code>mxfp8_add_pipeline(x, y, add=torch.ops.ascend_add_pipeline.add_pipeline)</code>。</p>
+<p>输出是 FP32。若输出也需要 MXFP8，还须对加法结果重新量化并返回新的 E8M0 scale。此例展示输入量化造成的误差，不代表原始 Add 内核执行 FP8 运算。</p></section></main>
+<script>
+const stages=[...document.querySelectorAll('.stage')],status=document.getElementById('status');let step=0;
+const names=['读取 FP32 输入','为每组计算 E8M0 scale','转换为 E4M3FN','按组反量化','调用原始 FP32 Add 内核'];
+function render(){stages.forEach((s,i)=>s.classList.toggle('active',i===step));status.textContent='阶段 '+(step+1)+'/5：'+names[step];
+const a=Number(document.getElementById('amax').value),v=Number(document.getElementById('value').value);
+if(!Number.isFinite(a)||a<0||!Number.isFinite(v)||Math.abs(v)>a){document.getElementById('scale').textContent='请输入有限且非负的最大值，并确保 |示例值| ≤ 最大值';document.getElementById('numbers').textContent='—';return}
+const exponent=a===0?-127:Math.max(-127,Math.min(127,Math.floor(Math.log2(a))-8));const encoded=a===0?0:exponent+127;const scale=2**(encoded-127);
+document.getElementById('scale').textContent='指数 '+(encoded-127)+'；编码 '+encoded+'；scale = '+scale.toExponential(5);
+document.getElementById('numbers').textContent='量化前的缩放值 ≈ '+(v/scale).toPrecision(6)+'；FP8 舍入后再乘 scale 得到近似原值'}
+document.getElementById('prev').onclick=()=>{step=(step+4)%5;render()};document.getElementById('next').onclick=()=>{step=(step+1)%5;render()};document.getElementById('amax').oninput=render;document.getElementById('value').oninput=render;render();
+</script></body></html>
