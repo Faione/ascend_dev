@@ -33,18 +33,17 @@ powershell -ExecutionPolicy Bypass -File .\environment\upload-windows.ps1 -Serve
 docker image inspect ubuntu:22.04 >/dev/null
 ```
 
-从仓库根目录构建 950 镜像。脚本将安装包复制到临时构建上下文，经 [`environment/Dockerfile`](environment/Dockerfile) 的多阶段构建安装；`.run` 和 wheel 不会留在最终镜像中。APT/PIP 镜像默认使用 `http://mirrors.tools.huawei.com`，可用 `--mirror-domain` 覆盖。
+从仓库根目录构建 950 镜像。将对应版本的 `torch-*.whl` 和 `torch_npu-*.whl` 放在 `cann-run/torch/2.7.1/` 或 `cann-run/torch/2.10.0/`；脚本根据 `--torch-version` 自动选择该目录中的两个 wheel，并读取 TorchNPU 的实际包版本。如果目录不在当前路径或仓库旁，使用 `--torch-root` 指向包含版本目录的 `cann-run/torch`。脚本将安装包复制到临时构建上下文，经 [`environment/Dockerfile`](environment/Dockerfile) 的多阶段构建安装；`.run` 和 wheel 不会留在最终镜像中。APT/PIP 镜像默认使用 `http://mirrors.tools.huawei.com`，可用 `--mirror-domain` 覆盖。
 
 ```bash
 bash environment/build-image.sh \
   --toolkit-run /home/user/ascend-packages/Ascend-cann-toolkit_9.1.0_linux-x86_64.run \
   --ops-run /home/user/ascend-packages/Ascend-cann-950-ops_9.1.0_linux-x86_64.run \
   --soc 950 \
-  --torch-wheel '/home/user/ascend-packages/torch-2.10.0+cpu-cp310-cp310-manylinux_2_28_x86_64.whl' \
-  --torch-npu-wheel /home/user/ascend-packages/torch_npu-2.10.0.post4-cp310-cp310-manylinux_2_28_x86_64.whl
+  --torch-version 2.10.0
 ```
 
-镜像名为 `ascend-dev:9.1.0-950-2.10.0`。`build-image.sh --help` 列出全部参数。`--base-image` 指定本地 Ubuntu 22.04 镜像；`--torch-version` 和 `--torch-npu-version` 须匹配 wheel 文件名。构建依赖镜像站安装 apt 包、PyTorch 的附加 Python 依赖。
+镜像名为 `ascend-dev:9.1.0-950-2.10.0`。如选择 `--torch-version 2.7.1`，镜像标签中的 Torch 版本也相应变为 `2.7.1`。`build-image.sh --help` 列出全部参数；`--base-image` 指定本地 Ubuntu 22.04 镜像。构建依赖镜像站安装 apt 包、PyTorch 的附加 Python 依赖。
 
 ## 二、后续实验
 

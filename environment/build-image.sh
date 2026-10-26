@@ -8,26 +8,23 @@ Usage: bash build-image.sh --toolkit-run FILE --ops-run FILE --soc MODEL [option
   --soc MODEL         Ops model label, e.g. 910b, 910, A3, 950, 310p
   --base-image IMAGE  Local Ubuntu 22.04 base image (default: ubuntu:22.04)
   --mirror-domain URL  APT and pip mirror origin (default: http://mirrors.tools.huawei.com)
-  --torch-version VER Torch version to install (default: 2.10.0)
-  --torch-npu-version VER TorchNPU package version (default: 2.10.0.post4)
-  --torch-wheel FILE  Local Python 3.10 x86_64 CPU wheel (required)
-  --torch-npu-wheel FILE  Local matching TorchNPU wheel (required)
+  --torch-version VER Select wheels from cann-run/torch/VER (e.g. 2.7.1 or 2.10.0)
+  --torch-root DIR   Directory containing version folders (default: auto-detect cann-run/torch)
   -h, --help          Show help
 Supports x86_64 packages and amd64 base images only.
 HELP
 }
 fail() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-# 参数可由命令行提供；默认值只用于通用版本和镜像站。
-toolkit=""; ops=""; soc=""; torch_wheel=""; torch_npu_wheel=""
+# 参数可由命令行提供；镜像站和基础镜像有默认值。
+toolkit=""; ops=""; soc=""; torch_root="${TORCH_ROOT:-}"
 base_image="${BASE_IMAGE:-ubuntu:22.04}"
 mirror_domain="${MIRROR_DOMAIN:-http://mirrors.tools.huawei.com}"
-torch_version="${TORCH_VERSION:-2.10.0}"
-torch_npu_version="${TORCH_NPU_VERSION:-2.10.0.post4}"
+torch_version="${TORCH_VERSION:-}"
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -h|--help) usage; exit 0 ;;
-        --toolkit-run|--ops-run|--soc|--base-image|--mirror-domain|--torch-version|--torch-npu-version|--torch-wheel|--torch-npu-wheel)
+        --toolkit-run|--ops-run|--soc|--base-image|--mirror-domain|--torch-version|--torch-root)
             [[ $# -ge 2 && -n "$2" && "$2" != --* ]] || fail "$1 requires a value"
             case "$1" in
                 --toolkit-run) toolkit="$2" ;;
@@ -36,9 +33,7 @@ while [[ $# -gt 0 ]]; do
                 --base-image) base_image="$2" ;;
                 --mirror-domain) mirror_domain="$2" ;;
                 --torch-version) torch_version="$2" ;;
-                --torch-npu-version) torch_npu_version="$2" ;;
-                --torch-wheel) torch_wheel="$2" ;;
-                --torch-npu-wheel) torch_npu_wheel="$2" ;;
+                --torch-root) torch_root="$2" ;;
             esac
             shift 2 ;;
         *) usage >&2; fail "Unknown argument: $1" ;;
@@ -56,19 +51,39 @@ soc_normalized="$(printf '%s' "$soc" | tr '[:upper:]' '[:lower:]')"
 ops_soc_normalized="$(printf '%s' "$ops_soc" | tr '[:upper:]' '[:lower:]')"
 [[ "$soc_normalized" == "$ops_soc_normalized" ]] || fail "--soc $soc does not match ops package model $ops_soc."
 [[ "$toolkit_version" == "$ops_version" ]] || fail "Version mismatch: Toolkit $toolkit_version, ops $ops_version."
-[[ "$torch_version" =~ ^[0-9]+(\.[0-9]+){1,2}$ ]] || fail 'Torch version must be numeric, e.g. 2.10.0.'
-[[ "$torch_npu_version" =~ ^[0-9]+(\.[0-9]+){1,2}(\.post[0-9]+)?$ ]] || fail 'TorchNPU version must look like 2.10.0.post4.'
-[[ "$torch_npu_version" == "$torch_version" || "$torch_npu_version" == "$torch_version".post* ]] || fail 'TorchNPU package version must match torch version.'
-[[ -n "$torch_wheel" && -n "$torch_npu_wheel" ]] || fail 'Specify both --torch-wheel and --torch-npu-wheel.'
-# 当前环境固定 Python 3.10 / x86_64，wheel 文件名必须与版本参数一致。
-torch_wheel_name=""
-[[ -s "$torch_wheel" ]] || fail "Torch wheel $torch_wheel does not exist or is empty."
+[[ "$torch_version" == 2.7.1 || "$torch_version" == 2.10.0 ]] || fail 'Specify --torch-version 2.7.1 or 2.10.0.'
+if [[ -z "$torch_root" ]]; then
+    if [[ -d "$PWD/cann-run/torch/$torch_version" ]]; then
+        torch_root="$PWD/cann-run/torch"
+    elif [[ -d "$PWD/torch/$torch_version" ]]; then
+        torch_root="$PWD/torch"
+    elif [[ "$(basename -- "$PWD")" == "$torch_version" && "$(basename -- "$(dirname -- "$PWD")")" == torch ]]; then
+        torch_root="$(dirname -- "$PWD")"
+    elif [[ -d "$script_dir/../../cann-run/torch/$torch_version" ]]; then
+        torch_root="$script_dir/../../cann-run/torch"
+    else
+        fail "Cannot find cann-run/torch/$torch_version; use --torch-root DIR."
+    fi
+fi
+wheel_dir="$torch_root/$torch_version"
+[[ -d "$wheel_dir" ]] || fail "Torch wheel directory $wheel_dir does not exist."
+shopt -s nullglob
+torch_candidates=("$wheel_dir"/torch-"$torch_version"*.whl)
+npu_candidates=("$wheel_dir"/torch_npu-"$torch_version"*.whl)
+shopt -u nullglob
+[[ ${#torch_candidates[@]} -eq 1 ]] || fail "Expected exactly one torch wheel in $wheel_dir, found ${#torch_candidates[@]}."
+[[ ${#npu_candidates[@]} -eq 1 ]] || fail "Expected exactly one torch_npu wheel in $wheel_dir, found ${#npu_candidates[@]}."
+torch_wheel="${torch_candidates[0]}"; torch_npu_wheel="${npu_candidates[0]}"
+[[ -s "$torch_wheel" && -s "$torch_npu_wheel" ]] || fail 'Torch wheel files must not be empty.'
 torch_wheel_name="$(basename -- "$torch_wheel")"
-[[ "$torch_wheel_name" == "torch-${torch_version}+cpu-cp310-cp310-manylinux_2_28_x86_64.whl" ]] || fail 'Expected the matching Python 3.10 x86_64 CPU torch wheel filename.'
-torch_npu_wheel_name=""
-[[ -s "$torch_npu_wheel" ]] || fail "TorchNPU wheel $torch_npu_wheel does not exist or is empty."
 torch_npu_wheel_name="$(basename -- "$torch_npu_wheel")"
-[[ "$torch_npu_wheel_name" == "torch_npu-${torch_npu_version}-cp310-cp310-manylinux_2_28_x86_64.whl" ]] || fail 'Expected the matching Python 3.10 x86_64 TorchNPU wheel filename.'
+# 当前镜像使用 Python 3.10 / x86_64；从文件名提取实际包版本供镜像内验证。
+torch_pattern="^torch-(${torch_version//./\\.}(\+cpu)?)-cp310-cp310-(manylinux[^/]*|linux)_x86_64\.whl$"
+npu_pattern="^torch_npu-(${torch_version//./\\.}(\.post[0-9]+)?)-cp310-cp310-(manylinux[^/]*|linux)_x86_64\.whl$"
+[[ "$torch_wheel_name" =~ $torch_pattern ]] || fail "Unsupported Python/platform or torch wheel filename: $torch_wheel_name"
+torch_package_version="${BASH_REMATCH[1]}"
+[[ "$torch_npu_wheel_name" =~ $npu_pattern ]] || fail "Unsupported Python/platform or torch_npu wheel filename: $torch_npu_wheel_name"
+torch_npu_version="${BASH_REMATCH[1]}"
 tag="ascend-dev:${toolkit_version}-${soc_normalized}-${torch_version}"
 [[ -s "$script_dir/Dockerfile" && -s "$script_dir/entrypoint.sh" ]] || fail 'Docker build files are missing.'
 command -v docker >/dev/null 2>&1 || fail 'Docker is unavailable.'
@@ -90,7 +105,7 @@ printf 'Building CANN %s for %s (x86_64)\n' "$toolkit_version" "$ops_soc"
 DOCKER_BUILDKIT=1 docker build --pull=false --platform linux/amd64 --progress=plain \
     --build-arg "BASE_IMAGE=$base_image" \
     --build-arg "MIRROR_DOMAIN=$mirror_domain" \
-    --build-arg "TORCH_VERSION=$torch_version" \
+    --build-arg "TORCH_VERSION=$torch_package_version" \
     --build-arg "TORCH_NPU_VERSION=$torch_npu_version" \
     --build-arg "TORCH_WHEEL_FILE=$torch_wheel_name" \
     --build-arg "TORCH_NPU_WHEEL_FILE=$torch_npu_wheel_name" \

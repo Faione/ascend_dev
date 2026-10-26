@@ -30,7 +30,7 @@ RUN --mount=type=bind,source=packages,target=/tmp/cann-packages,readonly \
     python3 -m pip install "/tmp/cann-packages/$TORCH_WHEEL_FILE"; \
     python3 -m pip install "/tmp/cann-packages/$TORCH_NPU_WHEEL_FILE"; \
     python3 -m pip install build pyyaml 'numpy<2' pytest; \
-    python3 -c "import importlib.metadata as m; assert m.version('torch') == '${TORCH_VERSION}+cpu'; assert m.version('torch-npu') == '${TORCH_NPU_VERSION}'"
+    python3 -c "import importlib.metadata as m; assert m.version('torch') == '${TORCH_VERSION}'; assert m.version('torch-npu') == '${TORCH_NPU_VERSION}'"
 
 FROM torch-install AS cann-install
 # .run 也只读挂载。先检查，再分别安装 Toolkit 与型号对应的算子包。
