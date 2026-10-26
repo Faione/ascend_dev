@@ -65,9 +65,9 @@ $toolkitName = 'Ascend-cann-toolkit_9.1.0_linux-x86_64.run'
 $layout = @("mkdir -p -- '$remoteDir/torch/2.10.0'")
 foreach ($model in @('910', '910b', '950')) {
     $opsName = "Ascend-cann-$model-ops_9.1.0_linux-x86_64.run"
-    $layout += "mkdir -p -- '$remoteDir/$model'"
-    $layout += "test -e '$remoteDir/$model/$toolkitName' || ln -s '../$toolkitName' '$remoteDir/$model/$toolkitName'"
-    $layout += "test -e '$remoteDir/$model/$opsName' || ln -s '../$opsName' '$remoteDir/$model/$opsName'"
+    $layout += "mkdir -p -- '$remoteDir/$model/9.1.0'"
+    $layout += "test -e '$remoteDir/$model/9.1.0/$toolkitName' || ln -s '../../$toolkitName' '$remoteDir/$model/9.1.0/$toolkitName'"
+    $layout += "test -e '$remoteDir/$model/9.1.0/$opsName' || ln -s '../../$opsName' '$remoteDir/$model/9.1.0/$opsName'"
 }
 foreach ($name in @('torch-2.10.0+cpu-cp310-cp310-manylinux_2_28_x86_64.whl', 'torch_npu-2.10.0.post4-cp310-cp310-manylinux_2_28_x86_64.whl')) {
     $layout += "test -e '$remoteDir/torch/2.10.0/$name' || ln -s '../../$name' '$remoteDir/torch/2.10.0/$name'"

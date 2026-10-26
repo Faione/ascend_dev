@@ -2,9 +2,10 @@
 set -euo pipefail
 usage() {
     cat <<'HELP'
-Usage: bash build-image.sh --soc MODEL --torch-version VER [options]
-  --soc MODEL         Select Toolkit and ops .run files from cann-run/MODEL
-                      e.g. 910b, 910, A3, 950, 310p
+Usage: bash build-image.sh --soc MODEL --cann-version VER --torch-version VER [options]
+  --soc MODEL         Device model, e.g. 910b, 910, A3, 950, 310p
+  --cann-version VER  Select Toolkit and ops .run files from cann-run/MODEL/VER
+                      e.g. 9.1.1 or 9.2.0
   --cann-root DIR     Directory containing model folders (default: auto-detect cann-run)
   --base-image IMAGE  Local Ubuntu 22.04 base image (default: ubuntu:22.04)
   --mirror-domain URL  APT and pip mirror origin (default: http://mirrors.tools.huawei.com)
@@ -17,17 +18,18 @@ HELP
 fail() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 # 参数可由命令行提供；镜像站和基础镜像有默认值。
-soc=""; cann_root="${CANN_ROOT:-}"; torch_root="${TORCH_ROOT:-}"
+soc=""; cann_version="${CANN_VERSION:-}"; cann_root="${CANN_ROOT:-}"; torch_root="${TORCH_ROOT:-}"
 base_image="${BASE_IMAGE:-ubuntu:22.04}"
 mirror_domain="${MIRROR_DOMAIN:-http://mirrors.tools.huawei.com}"
 torch_version="${TORCH_VERSION:-}"
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -h|--help) usage; exit 0 ;;
-        --soc|--cann-root|--base-image|--mirror-domain|--torch-version|--torch-root)
+        --soc|--cann-version|--cann-root|--base-image|--mirror-domain|--torch-version|--torch-root)
             [[ $# -ge 2 && -n "$2" && "$2" != --* ]] || fail "$1 requires a value"
             case "$1" in
                 --soc) soc="$2" ;;
+                --cann-version) cann_version="$2" ;;
                 --cann-root) cann_root="$2" ;;
                 --base-image) base_image="$2" ;;
                 --mirror-domain) mirror_domain="$2" ;;
@@ -39,20 +41,22 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 [[ "$soc" =~ ^[A-Za-z0-9]+$ ]] || fail 'Specify --soc with a model such as 950 or 910.'
+[[ "$cann_version" =~ ^[0-9]+(\.[0-9]+){2}$ ]] || fail 'Specify --cann-version, e.g. 9.1.1 or 9.2.0.'
 soc_normalized="$(printf '%s' "$soc" | tr '[:upper:]' '[:lower:]')"
 if [[ -z "$cann_root" ]]; then
     for root in "$PWD/cann-run" "$PWD" "$(dirname -- "$PWD")" "$(dirname -- "$(dirname -- "$PWD")")" "$script_dir/../../cann-run"; do
         if [[ -d "$root/$soc" ]]; then
-            cann_root="$root"; run_dir="$root/$soc"; break
+            cann_root="$root"; model_dir="$root/$soc"; break
         elif [[ -d "$root/$soc_normalized" ]]; then
-            cann_root="$root"; run_dir="$root/$soc_normalized"; break
+            cann_root="$root"; model_dir="$root/$soc_normalized"; break
         fi
     done
     [[ -n "$cann_root" ]] || fail "Cannot find cann-run/$soc; use --cann-root DIR."
 else
-    run_dir="$cann_root/$soc"
-    [[ -d "$run_dir" ]] || run_dir="$cann_root/$soc_normalized"
+    model_dir="$cann_root/$soc"
+    [[ -d "$model_dir" ]] || model_dir="$cann_root/$soc_normalized"
 fi
+run_dir="$model_dir/$cann_version"
 [[ -d "$run_dir" ]] || fail "CANN package directory $run_dir does not exist."
 shopt -s nullglob
 toolkit_candidates=("$run_dir"/Ascend-cann-toolkit_*_linux-x86_64.run)
@@ -78,6 +82,7 @@ ops_soc="${BASH_REMATCH[1]}"; ops_version="${BASH_REMATCH[2]}"
 ops_soc_normalized="$(printf '%s' "$ops_soc" | tr '[:upper:]' '[:lower:]')"
 [[ "$soc_normalized" == "$ops_soc_normalized" ]] || fail "--soc $soc does not match ops package model $ops_soc."
 [[ "$toolkit_version" == "$ops_version" ]] || fail "Version mismatch: Toolkit $toolkit_version, ops $ops_version."
+[[ "$toolkit_version" == "$cann_version" ]] || fail "Package version $toolkit_version does not match directory version $cann_version."
 [[ "$torch_version" == 2.7.1 || "$torch_version" == 2.10.0 ]] || fail 'Specify --torch-version 2.7.1 or 2.10.0.'
 if [[ -z "$torch_root" ]]; then
     if [[ -d "$PWD/cann-run/torch/$torch_version" ]]; then

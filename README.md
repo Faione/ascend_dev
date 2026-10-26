@@ -24,19 +24,19 @@ Add 示例从[实验 Gist](https://gist.github.com/Faione/fc06cfce0900e135ffddad
 若需准备 910/910B 环境，将对应的 [910 ops](https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/CANN/CANN%209.1.0/Ascend-cann-910-ops_9.1.0_linux-x86_64.run) 或 [910B ops](https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/CANN/CANN%209.1.0/Ascend-cann-910b-ops_9.1.0_linux-x86_64.run) 文件一起下载。Windows 上传脚本要求以上六个文件都存在：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\environment\upload-windows.ps1 -Server user@server -RemoteRoot /home/user/ascend-packages -DownloadDir C:\Users\you\Downloads
+powershell -ExecutionPolicy Bypass -File .\environment\upload-windows.ps1 -Server user@server -RemoteRoot /home/user/cann-run -DownloadDir C:\Users\you\Downloads
 ```
 
-已有文件也可以自行用 `scp` 上传。构建时，Toolkit 和对应型号的 ops `.run` 文件应位于同一个 `cann-run/<设备型号>/` 目录，例如 `cann-run/950/` 或 `cann-run/910/`。服务器先确认本地基础镜像存在：
+已有文件也可以自行用 `scp` 上传。构建时，Toolkit 和对应型号的 ops `.run` 文件应位于同一个 `cann-run/<soc>/<version>/` 目录；`soc` 是 950、910 等设备型号，`version` 是 9.1.1、9.2.0 等 CANN 版本。例如 `cann-run/950/9.1.1/`。服务器先确认本地基础镜像存在：
 
 ```bash
 docker image inspect ubuntu:22.04 >/dev/null
 ```
 
-从仓库根目录构建 950 镜像。将对应版本的 `torch-*.whl` 和 `torch_npu-*.whl` 放在 `cann-run/torch/2.7.1/` 或 `cann-run/torch/2.10.0/`。脚本根据 `--soc` 和 `--torch-version` 分别从设备型号目录选择 Toolkit、ops `.run` 文件，从 Torch 版本目录选择两个 wheel，并读取安装包版本。目录不在自动查找范围时，分别用 `--cann-root` 和 `--torch-root` 指向 `cann-run` 与 `cann-run/torch`。脚本将安装包复制到临时构建上下文，经 [`environment/Dockerfile`](environment/Dockerfile) 的多阶段构建安装；`.run` 和 wheel 不会留在最终镜像中。APT/PIP 镜像默认使用 `http://mirrors.tools.huawei.com`，可用 `--mirror-domain` 覆盖。
+从仓库根目录构建 950 镜像。将对应版本的 `torch-*.whl` 和 `torch_npu-*.whl` 放在 `cann-run/torch/2.7.1/` 或 `cann-run/torch/2.10.0/`。脚本根据 `--soc`、`--cann-version` 和 `--torch-version` 分别选择 CANN 安装包与两个 wheel，并核对文件名中的版本。目录不在自动查找范围时，分别用 `--cann-root` 和 `--torch-root` 指向 `cann-run` 与 `cann-run/torch`。脚本将安装包复制到临时构建上下文，经 [`environment/Dockerfile`](environment/Dockerfile) 的多阶段构建安装；`.run` 和 wheel 不会留在最终镜像中。APT/PIP 镜像默认使用 `http://mirrors.tools.huawei.com`，可用 `--mirror-domain` 覆盖。
 
 ```bash
-bash environment/build-image.sh --soc 950 --torch-version 2.10.0
+bash environment/build-image.sh --soc 950 --cann-version 9.1.0 --torch-version 2.10.0
 ```
 
 镜像名为 `ascend-dev:9.1.0-950-2.10.0`。如选择 `--torch-version 2.7.1`，镜像标签中的 Torch 版本也相应变为 `2.7.1`。`build-image.sh --help` 列出全部参数；`--base-image` 指定本地 Ubuntu 22.04 镜像。构建依赖镜像站安装 apt 包、PyTorch 的附加 Python 依赖。
