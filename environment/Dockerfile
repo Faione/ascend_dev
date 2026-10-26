@@ -30,7 +30,15 @@ RUN --mount=type=bind,source=packages,target=/tmp/cann-packages,readonly \
     python3 -m pip install "/tmp/cann-packages/$TORCH_WHEEL_FILE"; \
     python3 -m pip install "/tmp/cann-packages/$TORCH_NPU_WHEEL_FILE"; \
     python3 -m pip install build pyyaml 'numpy<2' pytest; \
-    python3 -c "import importlib.metadata as m, re; assert m.version('torch') == '${TORCH_VERSION}'; assert re.fullmatch(re.escape('${TORCH_NPU_VERSION}') + r'(?:\.post[0-9]+)?(?:\.dev[0-9]+)?', m.version('torch-npu'))"
+    python3 -c "import importlib.metadata as m, re; \
+        expected_torch = '${TORCH_VERSION}'; expected_npu = '${TORCH_NPU_VERSION}'; \
+        actual_torch = m.version('torch'); actual_npu = m.version('torch-npu'); \
+        expected_npu_base = re.split(r'\.(?:post|dev)', expected_npu, maxsplit=1)[0]; \
+        actual_npu_base = re.split(r'\.(?:post|dev)', actual_npu, maxsplit=1)[0]; \
+        print(f'Torch: expected={expected_torch}, installed={actual_torch}', flush=True); \
+        print(f'TorchNPU: expected base={expected_npu_base}, installed={actual_npu}, installed base={actual_npu_base}', flush=True); \
+        assert actual_torch == expected_torch, f'Torch version mismatch: expected {expected_torch}, installed {actual_torch}'; \
+        assert actual_npu_base == expected_npu_base, f'TorchNPU version mismatch: expected base {expected_npu_base}, installed {actual_npu}'"
 
 FROM torch-install AS cann-install
 # .run 也只读挂载。先检查，再分别安装 Toolkit 与型号对应的算子包。
