@@ -60,4 +60,18 @@ foreach ($name in $names) {
         throw "SHA256 mismatch after upload: $name"
     }
 }
+# 按 build-image.sh 的目录约定创建链接，避免重复上传 Toolkit 大文件。
+$toolkitName = 'Ascend-cann-toolkit_9.1.0_linux-x86_64.run'
+$layout = @("mkdir -p -- '$remoteDir/torch/2.10.0'")
+foreach ($model in @('910', '910b', '950')) {
+    $opsName = "Ascend-cann-$model-ops_9.1.0_linux-x86_64.run"
+    $layout += "mkdir -p -- '$remoteDir/$model'"
+    $layout += "test -e '$remoteDir/$model/$toolkitName' || ln -s '../$toolkitName' '$remoteDir/$model/$toolkitName'"
+    $layout += "test -e '$remoteDir/$model/$opsName' || ln -s '../$opsName' '$remoteDir/$model/$opsName'"
+}
+foreach ($name in @('torch-2.10.0+cpu-cp310-cp310-manylinux_2_28_x86_64.whl', 'torch_npu-2.10.0.post4-cp310-cp310-manylinux_2_28_x86_64.whl')) {
+    $layout += "test -e '$remoteDir/torch/2.10.0/$name' || ln -s '../../$name' '$remoteDir/torch/2.10.0/$name'"
+}
+& ssh $Server ($layout -join '; ')
+if ($LASTEXITCODE -ne 0) { throw 'Remote package layout creation failed.' }
 Write-Host "Ready: $remoteDir"

@@ -2,10 +2,10 @@
 set -euo pipefail
 usage() {
     cat <<'HELP'
-Usage: bash build-image.sh --toolkit-run FILE --ops-run FILE --soc MODEL [options]
-  --toolkit-run FILE  Original Ascend-cann-toolkit_<version>_linux-x86_64.run
-  --ops-run FILE      Original Ascend-cann-<model>-ops_<version>_linux-x86_64.run
-  --soc MODEL         Ops model label, e.g. 910b, 910, A3, 950, 310p
+Usage: bash build-image.sh --soc MODEL --torch-version VER [options]
+  --soc MODEL         Select Toolkit and ops .run files from cann-run/MODEL
+                      e.g. 910b, 910, A3, 950, 310p
+  --cann-root DIR     Directory containing model folders (default: auto-detect cann-run)
   --base-image IMAGE  Local Ubuntu 22.04 base image (default: ubuntu:22.04)
   --mirror-domain URL  APT and pip mirror origin (default: http://mirrors.tools.huawei.com)
   --torch-version VER Select wheels from cann-run/torch/VER (e.g. 2.7.1 or 2.10.0)
@@ -17,19 +17,18 @@ HELP
 fail() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 # 参数可由命令行提供；镜像站和基础镜像有默认值。
-toolkit=""; ops=""; soc=""; torch_root="${TORCH_ROOT:-}"
+soc=""; cann_root="${CANN_ROOT:-}"; torch_root="${TORCH_ROOT:-}"
 base_image="${BASE_IMAGE:-ubuntu:22.04}"
 mirror_domain="${MIRROR_DOMAIN:-http://mirrors.tools.huawei.com}"
 torch_version="${TORCH_VERSION:-}"
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -h|--help) usage; exit 0 ;;
-        --toolkit-run|--ops-run|--soc|--base-image|--mirror-domain|--torch-version|--torch-root)
+        --soc|--cann-root|--base-image|--mirror-domain|--torch-version|--torch-root)
             [[ $# -ge 2 && -n "$2" && "$2" != --* ]] || fail "$1 requires a value"
             case "$1" in
-                --toolkit-run) toolkit="$2" ;;
-                --ops-run) ops="$2" ;;
                 --soc) soc="$2" ;;
+                --cann-root) cann_root="$2" ;;
                 --base-image) base_image="$2" ;;
                 --mirror-domain) mirror_domain="$2" ;;
                 --torch-version) torch_version="$2" ;;
@@ -39,7 +38,36 @@ while [[ $# -gt 0 ]]; do
         *) usage >&2; fail "Unknown argument: $1" ;;
     esac
 done
-[[ -s "$toolkit" && -s "$ops" && -n "$soc" ]] || fail 'Specify existing --toolkit-run and --ops-run files plus --soc.'
+[[ "$soc" =~ ^[A-Za-z0-9]+$ ]] || fail 'Specify --soc with a model such as 950 or 910.'
+soc_normalized="$(printf '%s' "$soc" | tr '[:upper:]' '[:lower:]')"
+if [[ -z "$cann_root" ]]; then
+    for root in "$PWD/cann-run" "$PWD" "$(dirname -- "$PWD")" "$(dirname -- "$(dirname -- "$PWD")")" "$script_dir/../../cann-run"; do
+        if [[ -d "$root/$soc" ]]; then
+            cann_root="$root"; run_dir="$root/$soc"; break
+        elif [[ -d "$root/$soc_normalized" ]]; then
+            cann_root="$root"; run_dir="$root/$soc_normalized"; break
+        fi
+    done
+    [[ -n "$cann_root" ]] || fail "Cannot find cann-run/$soc; use --cann-root DIR."
+else
+    run_dir="$cann_root/$soc"
+    [[ -d "$run_dir" ]] || run_dir="$cann_root/$soc_normalized"
+fi
+[[ -d "$run_dir" ]] || fail "CANN package directory $run_dir does not exist."
+shopt -s nullglob
+toolkit_candidates=("$run_dir"/Ascend-cann-toolkit_*_linux-x86_64.run)
+ops_candidates=()
+for candidate in "$run_dir"/Ascend-cann-*-ops_*_linux-x86_64.run; do
+    candidate_name="$(basename -- "$candidate")"
+    [[ "$candidate_name" =~ ^Ascend-cann-([A-Za-z0-9]+)-ops_ ]] || continue
+    candidate_soc="$(printf '%s' "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')"
+    [[ "$candidate_soc" == "$soc_normalized" ]] && ops_candidates+=("$candidate")
+done
+shopt -u nullglob
+[[ ${#toolkit_candidates[@]} -eq 1 ]] || fail "Expected exactly one Toolkit .run in $run_dir, found ${#toolkit_candidates[@]}."
+[[ ${#ops_candidates[@]} -eq 1 ]] || fail "Expected exactly one $soc ops .run in $run_dir, found ${#ops_candidates[@]}."
+toolkit="${toolkit_candidates[0]}"; ops="${ops_candidates[0]}"
+[[ -s "$toolkit" && -s "$ops" ]] || fail 'CANN .run files must not be empty.'
 # 从官方文件名提取 CANN 版本及设备型号，防止 Toolkit/ops 混搭。
 toolkit_name="$(basename -- "$toolkit")"
 ops_name="$(basename -- "$ops")"
@@ -47,7 +75,6 @@ ops_name="$(basename -- "$ops")"
 toolkit_version="${BASH_REMATCH[1]}"
 [[ "$ops_name" =~ ^Ascend-cann-([A-Za-z0-9]+)-ops_([^_]+)_linux-x86_64\.run$ ]] || fail 'Expected an x86_64 ops .run filename.'
 ops_soc="${BASH_REMATCH[1]}"; ops_version="${BASH_REMATCH[2]}"
-soc_normalized="$(printf '%s' "$soc" | tr '[:upper:]' '[:lower:]')"
 ops_soc_normalized="$(printf '%s' "$ops_soc" | tr '[:upper:]' '[:lower:]')"
 [[ "$soc_normalized" == "$ops_soc_normalized" ]] || fail "--soc $soc does not match ops package model $ops_soc."
 [[ "$toolkit_version" == "$ops_version" ]] || fail "Version mismatch: Toolkit $toolkit_version, ops $ops_version."
