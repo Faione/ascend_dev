@@ -109,13 +109,13 @@ torch_wheel="${torch_candidates[0]}"; torch_npu_wheel="${npu_candidates[0]}"
 [[ -s "$torch_wheel" && -s "$torch_npu_wheel" ]] || fail 'Torch wheel files must not be empty.'
 torch_wheel_name="$(basename -- "$torch_wheel")"
 torch_npu_wheel_name="$(basename -- "$torch_npu_wheel")"
-# 当前镜像使用 Python 3.10 / x86_64；从文件名提取实际包版本供镜像内验证。
+# 当前镜像使用 Python 3.10 / x86_64；TorchNPU 的 post/dev 后缀不参与版本选择。
 torch_pattern="^torch-(${torch_version//./\\.}(\+cpu)?)-cp310-cp310-(manylinux[^/]*|linux)_x86_64\.whl$"
-npu_pattern="^torch_npu-(${torch_version//./\\.}(\.post[0-9]+)?)-cp310-cp310-(manylinux[^/]*|linux)_x86_64\.whl$"
+npu_pattern="^torch_npu-${torch_version//./\\.}(\.post[0-9]+)?(\.dev[0-9]+)?-cp310-cp310-(manylinux[^/]*|linux)_x86_64\.whl$"
 [[ "$torch_wheel_name" =~ $torch_pattern ]] || fail "Unsupported Python/platform or torch wheel filename: $torch_wheel_name"
 torch_package_version="${BASH_REMATCH[1]}"
 [[ "$torch_npu_wheel_name" =~ $npu_pattern ]] || fail "Unsupported Python/platform or torch_npu wheel filename: $torch_npu_wheel_name"
-torch_npu_version="${BASH_REMATCH[1]}"
+torch_npu_version="$torch_version"
 tag="ascend-dev:${toolkit_version}-${soc_normalized}-${torch_version}"
 [[ -s "$script_dir/Dockerfile" && -s "$script_dir/entrypoint.sh" ]] || fail 'Docker build files are missing.'
 command -v docker >/dev/null 2>&1 || fail 'Docker is unavailable.'

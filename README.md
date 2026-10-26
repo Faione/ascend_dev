@@ -33,7 +33,7 @@ powershell -ExecutionPolicy Bypass -File .\environment\upload-windows.ps1 -Serve
 docker image inspect ubuntu:22.04 >/dev/null
 ```
 
-从仓库根目录构建 950 镜像。将对应版本的 `torch-*.whl` 和 `torch_npu-*.whl` 放在 `cann-run/torch/2.7.1/` 或 `cann-run/torch/2.10.0/`。脚本根据 `--soc`、`--cann-version` 和 `--torch-version` 分别选择 CANN 安装包与两个 wheel，并核对文件名中的版本。目录不在自动查找范围时，分别用 `--cann-root` 和 `--torch-root` 指向 `cann-run` 与 `cann-run/torch`。脚本将安装包复制到临时构建上下文，经 [`environment/Dockerfile`](environment/Dockerfile) 的多阶段构建安装；`.run` 和 wheel 不会留在最终镜像中。APT/PIP 镜像默认使用 `http://mirrors.tools.huawei.com`，可用 `--mirror-domain` 覆盖。
+从仓库根目录构建 950 镜像。将对应版本的 `torch-*.whl` 和 `torch_npu-*.whl` 放在 `cann-run/torch/2.7.1/` 或 `cann-run/torch/2.10.0/`。脚本根据 `--soc`、`--cann-version` 和 `--torch-version` 分别选择 CANN 安装包与两个 wheel，并核对文件名中的基础版本；`torch_npu` 的 `.postN`、`.devN` 后缀不影响选择。目录不在自动查找范围时，分别用 `--cann-root` 和 `--torch-root` 指向 `cann-run` 与 `cann-run/torch`。脚本将安装包复制到临时构建上下文，经 [`environment/Dockerfile`](environment/Dockerfile) 的多阶段构建安装；`.run` 和 wheel 不会留在最终镜像中。APT/PIP 镜像默认使用 `http://mirrors.tools.huawei.com`，可用 `--mirror-domain` 覆盖。
 
 ```bash
 bash environment/build-image.sh --soc 950 --cann-version 9.1.0 --torch-version 2.10.0

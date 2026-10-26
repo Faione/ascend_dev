@@ -20,7 +20,7 @@ RUN set -eux; \
 FROM base AS torch-install
 # wheel 从构建上下文只读挂载；安装结果进入镜像，原始 wheel 不进入层。
 ARG TORCH_VERSION=2.10.0
-ARG TORCH_NPU_VERSION=2.10.0.post4
+ARG TORCH_NPU_VERSION=2.10.0
 ARG TORCH_WHEEL_FILE=
 ARG TORCH_NPU_WHEEL_FILE=
 ENV PIP_NO_CACHE_DIR=1
@@ -30,7 +30,7 @@ RUN --mount=type=bind,source=packages,target=/tmp/cann-packages,readonly \
     python3 -m pip install "/tmp/cann-packages/$TORCH_WHEEL_FILE"; \
     python3 -m pip install "/tmp/cann-packages/$TORCH_NPU_WHEEL_FILE"; \
     python3 -m pip install build pyyaml 'numpy<2' pytest; \
-    python3 -c "import importlib.metadata as m; assert m.version('torch') == '${TORCH_VERSION}'; assert m.version('torch-npu') == '${TORCH_NPU_VERSION}'"
+    python3 -c "import importlib.metadata as m, re; assert m.version('torch') == '${TORCH_VERSION}'; assert re.fullmatch(re.escape('${TORCH_NPU_VERSION}') + r'(?:\.post[0-9]+)?(?:\.dev[0-9]+)?', m.version('torch-npu'))"
 
 FROM torch-install AS cann-install
 # .run 也只读挂载。先检查，再分别安装 Toolkit 与型号对应的算子包。
