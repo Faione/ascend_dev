@@ -10,7 +10,7 @@ RUN set -eux; \
     sed -Ei "s#https?://([a-z0-9.-]*archive.ubuntu.com|security.ubuntu.com)#${mirror}#g" /etc/apt/sources.list; \
     apt-get update; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-      python3 python3-pip python3-dev build-essential cmake ninja-build git \
+      python3 python3-pip python3-dev build-essential cmake ninja-build git unzip vim \
       libssl-dev zlib1g-dev libffi-dev ca-certificates; \
     rm -rf /var/lib/apt/lists/*; \
     python3 -m pip config --user set global.index "${mirror}/pypi/simple"; \
@@ -29,7 +29,7 @@ RUN --mount=type=bind,source=packages,target=/tmp/cann-packages,readonly \
     python3 -c "import sys; assert sys.version_info[:2] == (3, 10), sys.version"; \
     python3 -m pip install "/tmp/cann-packages/$TORCH_WHEEL_FILE"; \
     python3 -m pip install "/tmp/cann-packages/$TORCH_NPU_WHEEL_FILE"; \
-    python3 -m pip install build pyyaml 'numpy<2' pytest; \
+    python3 -m pip install build pyyaml 'numpy<2' pytest dtype; \
     python3 -c "import importlib.metadata as m, re; \
         expected_torch = '${TORCH_VERSION}'; expected_npu = '${TORCH_NPU_VERSION}'; \
         actual_torch = m.version('torch'); actual_npu = m.version('torch-npu'); \
